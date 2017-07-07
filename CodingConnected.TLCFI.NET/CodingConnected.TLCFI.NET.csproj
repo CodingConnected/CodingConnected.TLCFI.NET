@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E2CDCF40-4D43-47E1-8DEA-5DB033DE7907}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CodingConnected.TLCFI.NET</RootNamespace>
+    <AssemblyName>CodingConnected.TLCFI.NET</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CodingConnected.JsonRPC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CodingConnected.JsonRPC\CodingConnected.JsonRPC\bin\Debug\CodingConnected.JsonRPC.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="NLog.config">
+      <Paket>True</Paket>
+    </Content>
+    <Content Include="NLog.xsd">
+      <Paket>True</Paket>
+    </Content>
+    <Compile Include="Attributes\ObjectIDAttribute.cs" />
+    <Compile Include="Data\ITLCFIDataProvider.cs" />
+    <Compile Include="Generic\XmlFileSerializer.cs" />
+    <Compile Include="Helpers\Sha256Hasher.cs" />
+    <Compile Include="Data\TLCFIDataProvider.cs" />
+    <Compile Include="Data\TLCFISettings.cs" />
+    <Compile Include="Exceptions\InvalidMetaReceivedException.cs" />
+    <Compile Include="Exceptions\InvalidStateReceivedException.cs" />
+    <Compile Include="Exceptions\InvalidTLCObjectTypeException.cs" />
+    <Compile Include="Exceptions\RegistrationFailedException.cs" />
+    <Compile Include="Exceptions\TLCFISessionException.cs" />
+    <Compile Include="Exceptions\TLCObjectNotFoundException.cs" />
+    <Compile Include="Extensions\LoggerExtensions.cs" />
+    <Compile Include="Generic\TwoWayTcpClient.cs" />
+    <Compile Include="Generic\TwoWayTcpClient.Receiver.cs">
+      <DependentUpon>TwoWayTcpClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Generic\TwoWayTcpClient.Sender.cs">
+      <DependentUpon>TwoWayTcpClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Helpers\TLCFIStateChecker.cs" />
+    <Compile Include="Models\Converters\TlcObjectJsonConverter.cs" />
+    <Compile Include="Models\Generic\AliveObject.cs" />
+    <Compile Include="Models\Generic\DeregistrationReply.cs" />
+    <Compile Include="Models\Generic\DeregistrationRequest.cs" />
+    <Compile Include="Models\Generic\Enumerations\ApplicationType.cs" />
+    <Compile Include="Models\Generic\Enumerations\ProtocolErrorCode.cs" />
+    <Compile Include="Models\Generic\Enumerations\SessionEventCode.cs" />
+    <Compile Include="Models\Generic\ITLCFacilitiesGenericAsync.cs" />
+    <Compile Include="Models\Generic\ITLCFacilitiesGeneric.cs" />
+    <Compile Include="Models\Generic\ITLCFIPeerAsync.cs" />
+    <Compile Include="Models\Generic\ITLCFIPeer.cs" />
+    <Compile Include="Models\Generic\Location.cs" />
+    <Compile Include="Models\Generic\ObjectData.cs" />
+    <Compile Include="Models\Generic\ObjectEvent.cs" />
+    <Compile Include="Models\Generic\ObjectMeta.cs" />
+    <Compile Include="Models\Generic\ObjectReference.cs" />
+    <Compile Include="Models\Generic\ObjectStateUpdate.cs" />
+    <Compile Include="Models\Generic\ObjectStateUpdateGroup.cs" />
+    <Compile Include="Models\Generic\ProtocolVersion.cs" />
+    <Compile Include="Models\Generic\RegistrationReply.cs" />
+    <Compile Include="Models\Generic\RegistrationRequest.cs" />
+    <Compile Include="Models\Generic\SessionEvent.cs" />
+    <Compile Include="Models\Generic\SessionEventInformation.cs" />
+    <Compile Include="Models\TLC\Base\TLCIntersectionObjectBase.cs" />
+    <Compile Include="Models\TLC\Base\TLCObjectBase.cs" />
+    <Compile Include="Models\TLC\Base\TLCSessionBase.cs" />
+    <Compile Include="Models\TLC\Enumerations\AnouncementType.cs" />
+    <Compile Include="Models\TLC\Enumerations\ControlState.cs" />
+    <Compile Include="Models\TLC\Enumerations\DetectorClassification.cs" />
+    <Compile Include="Models\TLC\Enumerations\DetectorDirection.cs" />
+    <Compile Include="Models\TLC\Enumerations\DetectorFaultState.cs" />
+    <Compile Include="Models\TLC\Enumerations\DetectorState.cs" />
+    <Compile Include="Models\TLC\Enumerations\HandoverCapability.cs" />
+    <Compile Include="Models\TLC\Enumerations\InputFaultState.cs" />
+    <Compile Include="Models\TLC\Enumerations\IntersectionControlState.cs" />
+    <Compile Include="Models\TLC\Enumerations\JourneyCategory.cs" />
+    <Compile Include="Models\TLC\Enumerations\Manufacturer.cs" />
+    <Compile Include="Models\TLC\Enumerations\OutputFaultState.cs" />
+    <Compile Include="Models\TLC\Enumerations\PriorityClass.cs" />
+    <Compile Include="Models\TLC\Enumerations\PunctualityClass.cs" />
+    <Compile Include="Models\TLC\Enumerations\SignalGroupState.cs" />
+    <Compile Include="Models\TLC\Enumerations\SpecialVehicleEventGeneratorFaultState.cs" />
+    <Compile Include="Models\TLC\Enumerations\SwicoState.cs" />
+    <Compile Include="Models\TLC\Enumerations\TLCObjectType.cs" />
+    <Compile Include="Models\TLC\Enumerations\VehicleStatus.cs" />
+    <Compile Include="Models\TLC\Enumerations\VehicleType.cs" />
+    <Compile Include="Models\TLC\Events\DetectorEvent.cs" />
+    <Compile Include="Models\TLC\Events\SpecialVehicleEvent.cs" />
+    <Compile Include="Models\TLC\ITLCFIClientAsync.cs" />
+    <Compile Include="Models\TLC\ITLCFIClient.cs" />
+    <Compile Include="Models\TLC\ITLCFIFacilitiesAsync.cs" />
+    <Compile Include="Models\TLC\ITLCFIFacilities.cs" />
+    <Compile Include="Models\TLC\Objects\Detector.cs" />
+    <Compile Include="Models\TLC\Objects\Input.cs" />
+    <Compile Include="Models\TLC\Objects\Intersection.cs" />
+    <Compile Include="Models\TLC\Objects\Output.cs" />
+    <Compile Include="Models\TLC\Objects\Sessions\ConsumerApplication.cs" />
+    <Compile Include="Models\TLC\Objects\Sessions\ControlApplication.cs" />
+    <Compile Include="Models\TLC\Objects\Sessions\ProviderApplication.cs" />
+    <Compile Include="Models\TLC\Objects\SignalGroup.cs" />
+    <Compile Include="Models\TLC\Objects\SpecialVehicleEventGenerator.cs" />
+    <Compile Include="Models\TLC\Objects\TLCFacilities.cs" />
+    <Compile Include="Models\TLC\Objects\Variable.cs" />
+    <Compile Include="Models\TLC\Other\FacilitiesInformation.cs" />
+    <Compile Include="Models\TLC\Other\SignalConflict.cs" />
+    <Compile Include="Models\TLC\Other\SignalGroupPrediction.cs" />
+    <Compile Include="Models\TLC\Other\SignalTiming.cs" />
+    <Compile Include="Models\TLC\Other\TlcFiDateTime.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Proxies\CLAProxy.cs" />
+    <Compile Include="Proxies\TLCProxy.cs" />
+    <Compile Include="Tools\ITicksGenerator.cs" />
+    <Compile Include="Tools\TicksGenerator.cs" />
+    <Compile Include="Tools\TimestampGenerator.cs" />
+    <Compile Include="Tools\ValueChecker.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="paket.references" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
+      <ItemGroup>
+        <Reference Include="JetBrains.Annotations">
+          <HintPath>..\packages\JetBrains.Annotations\lib\net\JetBrains.Annotations.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
+      <ItemGroup>
+        <Reference Include="Newtonsoft.Json">
+          <HintPath>..\packages\Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+  <Choose>
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And $(TargetFrameworkVersion) == 'v4.5'">
+      <ItemGroup>
+        <Reference Include="NLog">
+          <HintPath>..\packages\NLog\lib\net45\NLog.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+</Project>
