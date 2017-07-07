@@ -127,7 +127,7 @@ namespace CodingConnected.TLCFI.NET.Client
         public event EventHandler ClientInitialized;
 
         /// <summary>
-        /// Raised upon definitive loss of control
+        /// Raised upon definitive loss of control; also raised when connection is lost
         /// The client may no longer set ReqState on any object after loosing control
         /// </summary>
         [UsedImplicitly]
@@ -195,7 +195,7 @@ namespace CodingConnected.TLCFI.NET.Client
                         throw new NullReferenceException(
                             "LostControl, StartControlRequestReceived and EndControlRequestReceived event MUST be handled.");
                     }
-
+                    
                     StateManager = new TLCFIClientStateManager();
                     
                     _session = await _sessionManager.GetNewSession(StateManager, sessionToken);
@@ -252,10 +252,6 @@ namespace CodingConnected.TLCFI.NET.Client
 
                         StateManager.ControlSession.HasControlStateChanged += OnSessionControlChanged;
                         StateManager.Intersection.HasStateChanged += OnIntersectionControlChanged;
-                        _sessionManager.TLCSessionEnded += (o, e) =>
-                        {
-                            LostControl?.Invoke(this, EventArgs.Empty);
-                        };
 
                         ClientInitialized?.Invoke(this, EventArgs.Empty);
                     }
@@ -391,14 +387,26 @@ namespace CodingConnected.TLCFI.NET.Client
         /// </summary>
         public async Task ConfirmEndControl(CancellationToken token)
         {
-            _controlEndingCancellationTokenSource.Cancel();
-            if (_userWantsControl && StateManager.ControlSession.ReqControlState != ControlState.ReadyToControl)
+            try
             {
-                await _session.SetReqControlStateAsync(ControlState.ReadyToControl);
+
+                _controlEndingCancellationTokenSource?.Cancel();
+                if (_userWantsControl && StateManager.ControlSession.ReqControlState != ControlState.ReadyToControl)
+                {
+                    var reqControlStateAsync = _session?.SetReqControlStateAsync(ControlState.ReadyToControl);
+                    if (reqControlStateAsync != null)
+                        await reqControlStateAsync;
+                }
+                else if (StateManager.ControlSession.ReqControlState != ControlState.Offline)
+                {
+                    var reqControlStateAsync = _session?.SetReqControlStateAsync(ControlState.Offline);
+                    if (reqControlStateAsync != null)
+                        await reqControlStateAsync;
+                }
             }
-            else if (StateManager.ControlSession.ReqControlState != ControlState.Offline)
+            catch (Exception e)
             {
-                await _session.SetReqControlStateAsync(ControlState.Offline);
+                _logger.Warn(e, "Exception in ConfirmEndControl: ");
             }
         }
 
@@ -643,6 +651,11 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
+        private void OnSessionEnded(object sender, EventArgs e)
+        {
+            LostControl?.Invoke(this, EventArgs.Empty);
+        }
+
         private void OnIntersectionControlChanged(object sender, IntersectionControlState? state)
         {
             if(state.HasValue) IntersectionStateChanged?.Invoke(this, state.Value);
@@ -742,6 +755,7 @@ namespace CodingConnected.TLCFI.NET.Client
             token.Register(() => { _sessionCancellationTokenSource.Cancel(); });
             var endPoint = new IPEndPoint(IPAddress.Parse(_config.RemoteAddress), config.RemotePort);
             _sessionManager = new TLCFIClientSessionManager(endPoint);
+            _sessionManager.TLCSessionEnded += OnSessionEnded;
             _clientInitializer = new TLCFIClientInitializer(_config);
         }
 
