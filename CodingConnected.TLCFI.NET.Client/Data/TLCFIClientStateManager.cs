@@ -2,9 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
-using System.Xml.Serialization;
 using JetBrains.Annotations;
 using CodingConnected.JsonRPC;
 using CodingConnected.TLCFI.NET.Exceptions;
@@ -78,6 +76,8 @@ namespace CodingConnected.TLCFI.NET.Client.Data
         internal event EventHandler<SignalGroup> SignalGroupStateChanged;
         internal event EventHandler<Input> InputStateChanged;
         internal event EventHandler<Output> OutputStateChanged;
+        internal event EventHandler<Variable> VariableChanged;
+        internal event EventHandler<Intersection> IntersectionStateChanged;
 
         #endregion // Events
 
@@ -190,17 +190,17 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             }
             foreach (var v in InternalVariables)
             {
+                v.ChangedState += (o, e) => { VariableChanged?.Invoke(this, v); };
                 _staticObjects.Add("_v_" + v.Id, v);
-                // TODO: state change
             }
             foreach (var i in InternalIntersections)
             {
                 _staticObjects.Add("_int_" + i.Id, i);
+                i.ChangedState += (o, e) => { IntersectionStateChanged?.Invoke(this, i); };
                 if (i.Id == intersectionId)
                 {
                     Intersection = i;
                 }
-                // TODO: state change
             }
 
             // Initialize properties
@@ -345,7 +345,10 @@ namespace CodingConnected.TLCFI.NET.Client.Data
 
         internal void SetObjectStateChanged(string id, TLCObjectType type)
         {
-            _changedObjects.Add(new Tuple<string, TLCObjectType>(id, type));
+            lock (_locker)
+            {
+                _changedObjects.Add(new Tuple<string, TLCObjectType>(id, type));
+            }
         }
 
         #endregion // Internal Methods

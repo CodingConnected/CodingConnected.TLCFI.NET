@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using Newtonsoft.Json;
-using CodingConnected.TLCFI.NET.Tools;
 
 namespace CodingConnected.TLCFI.NET.Models.Generic
 {

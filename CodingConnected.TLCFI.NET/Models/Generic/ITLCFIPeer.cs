@@ -3,6 +3,6 @@
     public interface ITLCFIPeer
     {
         AliveObject Alive(AliveObject alive);
-        ObjectMeta ReadMeta(Generic.ObjectReference objectReference);
+        ObjectMeta ReadMeta(ObjectReference objectReference);
     }
 }

@@ -4,7 +4,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
 {
     public interface ITLCFIClient : ITLCFIPeer
     {
-        void UpdateState(Generic.ObjectStateUpdateGroup objectstateupdategroup);
-        void NotifyEvent(Generic.ObjectEvent objectevent);
+        void UpdateState(ObjectStateUpdateGroup objectstateupdategroup);
+        void NotifyEvent(ObjectEvent objectevent);
     }
 }

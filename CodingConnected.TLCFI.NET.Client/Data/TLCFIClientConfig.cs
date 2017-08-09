@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Xml.Serialization;
 using CodingConnected.TLCFI.NET.Models.Generic;
 using CodingConnected.TLCFI.NET.Models.TLC;

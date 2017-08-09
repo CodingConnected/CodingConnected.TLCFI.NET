@@ -1,12 +1,9 @@
 ﻿using NLog;
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using CodingConnected.TLCFI.NET.Client;
 using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Client.Data;
-using CodingConnected.TLCFI.NET.Generic;
 
 namespace CodingConnected.TLCFI.NET.TestClient
 {

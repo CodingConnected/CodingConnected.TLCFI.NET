@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -258,7 +257,7 @@ namespace CodingConnected.TLCFI.NET.Client
                         _sessionManager.ResetConnectionRetryTimers();
 
                         StateManager.ControlSession.HasControlStateChanged += OnSessionControlChanged;
-                        StateManager.Intersection.HasStateChanged += OnIntersectionControlChanged;
+                        StateManager.Intersection.ChangedState += OnIntersectionControlChanged;
 
                         ClientInitialized?.Invoke(this, EventArgs.Empty);
                     }

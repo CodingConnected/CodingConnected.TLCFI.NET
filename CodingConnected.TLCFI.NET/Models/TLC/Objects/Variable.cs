@@ -56,6 +56,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
             set
             {
                 Tools.ValueChecker.CheckValidVariableState(value);
+                ChangedState?.Invoke(this, EventArgs.Empty);
                 _value = value;
             }
         }
@@ -94,6 +95,12 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
         }
 
         #endregion // Properties
+
+        #region Events
+
+        public event EventHandler ChangedState;
+
+        #endregion // Events
 
         #region TLCObjectBase Methods
 

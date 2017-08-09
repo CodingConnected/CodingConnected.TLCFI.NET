@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Dynamic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using CodingConnected.TLCFI.NET.Tools;
 
 namespace CodingConnected.TLCFI.NET.Models.TLC
 {

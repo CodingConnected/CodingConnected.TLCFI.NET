@@ -1,6 +1,5 @@
 ﻿using System;
 using CodingConnected.TLCFI.NET.Models.TLC;
-using NLog;
 
 namespace CodingConnected.TLCFI.NET.Helpers
 {

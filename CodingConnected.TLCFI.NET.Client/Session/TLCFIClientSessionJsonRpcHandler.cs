@@ -26,7 +26,6 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         private readonly JsonRpcService _service;
         private readonly TLCFIClientStateManager _stateManager;
         private readonly TLCProxy _tlcProxy;
-        private readonly TLCFIClientSessionState _sessionState;
         private readonly CancellationToken _sessionCancellationToken;
         private readonly Regex _jsonRpcMethodRegex = new Regex(@"['""]method['""]", RegexOptions.Compiled);
 
@@ -157,7 +156,6 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             _stateManager = stateManager;
             _tlcProxy = tlcProxy;
             _sessionCancellationToken = token;
-            _sessionState = sessionState;
             tcpClient.DataReceived += async (o, e) =>
             {
                 if (!_jsonRpcMethodRegex.IsMatch(e)) return;

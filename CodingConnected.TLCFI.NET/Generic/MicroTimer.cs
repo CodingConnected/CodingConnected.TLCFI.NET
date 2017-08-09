@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace CodingConnected.TLCFI.NET.Generic
 {
@@ -8,11 +9,11 @@ namespace CodingConnected.TLCFI.NET.Generic
     public class MicroStopwatch : System.Diagnostics.Stopwatch
     {
         readonly double _microSecPerTick =
-            1000000D / System.Diagnostics.Stopwatch.Frequency;
+            1000000D / Frequency;
 
         public MicroStopwatch()
         {
-            if (!System.Diagnostics.Stopwatch.IsHighResolution)
+            if (!IsHighResolution)
             {
                 throw new Exception("On this system the high-resolution " +
                                     "performance counter is not available");
@@ -30,6 +31,7 @@ namespace CodingConnected.TLCFI.NET.Generic
         public delegate void MicroTimerElapsedEventHandler(
             object sender,
             MicroTimerEventArgs timerEventArgs);
+        [UsedImplicitly]
         public event MicroTimerElapsedEventHandler MicroTimerElapsed;
 
         System.Threading.Thread _threadTimer = null;
@@ -48,32 +50,21 @@ namespace CodingConnected.TLCFI.NET.Generic
 
         public long Interval
         {
-            get
-            {
-                return System.Threading.Interlocked.Read(
-                    ref _timerIntervalInMicroSec);
-            }
-            set
-            {
-                System.Threading.Interlocked.Exchange(
-                    ref _timerIntervalInMicroSec, value);
-            }
+            get => System.Threading.Interlocked.Read(
+                ref _timerIntervalInMicroSec);
+            set => System.Threading.Interlocked.Exchange(
+                ref _timerIntervalInMicroSec, value);
         }
 
         public long IgnoreEventIfLateBy
         {
-            get
-            {
-                return System.Threading.Interlocked.Read(
-                    ref _ignoreEventIfLateBy);
-            }
-            set
-            {
-                System.Threading.Interlocked.Exchange(
-                    ref _ignoreEventIfLateBy, value <= 0 ? long.MaxValue : value);
-            }
+            get => System.Threading.Interlocked.Read(
+                ref _ignoreEventIfLateBy);
+            set => System.Threading.Interlocked.Exchange(
+                ref _ignoreEventIfLateBy, value <= 0 ? long.MaxValue : value);
         }
 
+        [UsedImplicitly]
         public bool Enabled
         {
             set
@@ -87,10 +78,7 @@ namespace CodingConnected.TLCFI.NET.Generic
                     Stop();
                 }
             }
-            get
-            {
-                return (_threadTimer != null && _threadTimer.IsAlive);
-            }
+            get => _threadTimer != null && _threadTimer.IsAlive;
         }
 
         public void Start()
@@ -102,28 +90,31 @@ namespace CodingConnected.TLCFI.NET.Generic
 
             _stopTimer = false;
 
-            System.Threading.ThreadStart threadStart = delegate ()
+            void ThreadStart()
             {
-                NotificationTimer(ref _timerIntervalInMicroSec,
-                    ref _ignoreEventIfLateBy,
-                    ref _stopTimer);
-            };
+                NotificationTimer(ref _timerIntervalInMicroSec, ref _ignoreEventIfLateBy, ref _stopTimer);
+            }
 
-            _threadTimer = new System.Threading.Thread(threadStart);
-            _threadTimer.Priority = System.Threading.ThreadPriority.Highest;
+            _threadTimer = new System.Threading.Thread(ThreadStart)
+            {
+                Priority = System.Threading.ThreadPriority.Highest
+            };
             _threadTimer.Start();
         }
 
+        [UsedImplicitly]
         public void Stop()
         {
             _stopTimer = true;
         }
 
+        [UsedImplicitly]
         public void StopAndWait()
         {
             StopAndWait(System.Threading.Timeout.Infinite);
         }
 
+        [UsedImplicitly]
         public bool StopAndWait(int timeoutInMilliSec)
         {
             _stopTimer = true;
@@ -137,6 +128,7 @@ namespace CodingConnected.TLCFI.NET.Generic
             return _threadTimer.Join(timeoutInMilliSec);
         }
 
+        [UsedImplicitly]
         public void Abort()
         {
             _stopTimer = true;
@@ -151,25 +143,25 @@ namespace CodingConnected.TLCFI.NET.Generic
             ref long ignoreEventIfLateBy,
             ref bool stopTimer)
         {
-            int timerCount = 0;
+            var timerCount = 0;
             long nextNotification = 0;
 
-            MicroStopwatch microStopwatch = new MicroStopwatch();
+            var microStopwatch = new MicroStopwatch();
             microStopwatch.Start();
 
             while (!stopTimer)
             {
-                long callbackFunctionExecutionTime =
+                var callbackFunctionExecutionTime =
                     microStopwatch.ElapsedMicroseconds - nextNotification;
 
-                long timerIntervalInMicroSecCurrent =
+                var timerIntervalInMicroSecCurrent =
                     System.Threading.Interlocked.Read(ref timerIntervalInMicroSec);
-                long ignoreEventIfLateByCurrent =
+                var ignoreEventIfLateByCurrent =
                     System.Threading.Interlocked.Read(ref ignoreEventIfLateBy);
 
                 nextNotification += timerIntervalInMicroSecCurrent;
                 timerCount++;
-                long elapsedMicroseconds = 0;
+                long elapsedMicroseconds;
 
                 while ((elapsedMicroseconds = microStopwatch.ElapsedMicroseconds)
                        < nextNotification)
@@ -177,19 +169,19 @@ namespace CodingConnected.TLCFI.NET.Generic
                     System.Threading.Thread.SpinWait(10);
                 }
 
-                long timerLateBy = elapsedMicroseconds - nextNotification;
+                var timerLateBy = elapsedMicroseconds - nextNotification;
 
                 if (timerLateBy >= ignoreEventIfLateByCurrent)
                 {
                     continue;
                 }
 
-                MicroTimerEventArgs microTimerEventArgs =
+                var microTimerEventArgs =
                     new MicroTimerEventArgs(timerCount,
                         elapsedMicroseconds,
                         timerLateBy,
                         callbackFunctionExecutionTime);
-                MicroTimerElapsed(this, microTimerEventArgs);
+                MicroTimerElapsed?.Invoke(this, microTimerEventArgs);
             }
 
             microStopwatch.Stop();

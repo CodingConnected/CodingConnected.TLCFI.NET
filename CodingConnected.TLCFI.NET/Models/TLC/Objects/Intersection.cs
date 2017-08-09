@@ -128,7 +128,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
                 _state = value;
                 _stateChanged = true;
                 StateTicks = TicksGenerator.Default.GetCurrentTicks();
-                HasStateChanged?.Invoke(this, value);
+                ChangedState?.Invoke(this, value);
             }
         }
 
@@ -136,7 +136,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
 
         #region Events
 
-        public event EventHandler<IntersectionControlState?> HasStateChanged;
+        public event EventHandler<IntersectionControlState?> ChangedState;
 
         #endregion // Events
 

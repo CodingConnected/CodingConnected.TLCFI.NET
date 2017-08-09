@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Data;
 
 namespace CodingConnected.TLCFI.NET.Generic
@@ -22,7 +19,7 @@ namespace CodingConnected.TLCFI.NET.Generic
             internal Receiver(NetworkStream stream)
             {
                 _stream = stream;
-                _reader = new StreamReader(stream, Encoding.ASCII);
+                new StreamReader(stream, Encoding.ASCII);
                 var thread = new Thread(Run);
                 thread.Start();
             }
@@ -47,7 +44,7 @@ namespace CodingConnected.TLCFI.NET.Generic
                             throw new IOException();
                         }
 
-                        string dataFromClient = Encoding.ASCII.GetString(receiveBuffer, 0, bytesRead);
+                        var dataFromClient = Encoding.ASCII.GetString(receiveBuffer, 0, bytesRead);
                         foreach (var c in dataFromClient)
                         {
                             switch (c)
@@ -97,7 +94,6 @@ namespace CodingConnected.TLCFI.NET.Generic
                 Disconnected?.Invoke(this, new EventArgs());
             }
 
-            private StreamReader _reader;
             private readonly NetworkStream _stream;
         }
     }

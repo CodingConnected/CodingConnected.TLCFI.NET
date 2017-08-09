@@ -6,7 +6,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
 {
     public interface ITLCFIClientAsync : ITLCFIPeerAsync
     {
-        Task UpdateStateAsync(Generic.ObjectStateUpdateGroup objectstateupdategroup, CancellationToken token);
-        Task NotifyEventAsync(Generic.ObjectEvent objectevent, CancellationToken token);
+        Task UpdateStateAsync(ObjectStateUpdateGroup objectstateupdategroup, CancellationToken token);
+        Task NotifyEventAsync(ObjectEvent objectevent, CancellationToken token);
     }
 }

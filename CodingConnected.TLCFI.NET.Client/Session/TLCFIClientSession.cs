@@ -225,7 +225,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                         }
                         _logger.Info("TLC set Application.ControlState from {0} to {1}.",
                             _stateManager.ControlSession.ControlState, application.ControlState);
-                        if (_stateManager.ControlSession.ControlState.HasValue && application.ControlState.HasValue)
+                        if (_stateManager.ControlSession.ControlState.HasValue)
                             if (!TLCFIStateChecker.IsControlStateChangeOk(_stateManager.ControlSession.ControlState.Value,
                                 application.ControlState.Value))
                             {

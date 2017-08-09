@@ -41,7 +41,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
             get => _id;
             set
             {
-                Tools.ValueChecker.CheckValidObjectId(value);
+                ValueChecker.CheckValidObjectId(value);
                 _id = value;
             }
         }

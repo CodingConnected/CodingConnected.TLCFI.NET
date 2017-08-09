@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Xml.Serialization;
 using CodingConnected.TLCFI.NET.Models.Generic;
 using NLog;
-using CodingConnected.TLCFI.NET.Helpers;
 
 namespace CodingConnected.TLCFI.NET.Data
 {

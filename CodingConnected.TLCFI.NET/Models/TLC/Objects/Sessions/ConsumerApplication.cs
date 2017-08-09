@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Dynamic;
 using CodingConnected.TLCFI.NET.Models.Generic;
 using CodingConnected.TLCFI.NET.Models.TLC.Base;
 using Newtonsoft.Json;
@@ -41,7 +40,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
             }
         }
         [JsonProperty("type")]
-        public Generic.ApplicationType Type { get; set; }
+        public ApplicationType Type { get; set; }
 
         #endregion // Properties
 
