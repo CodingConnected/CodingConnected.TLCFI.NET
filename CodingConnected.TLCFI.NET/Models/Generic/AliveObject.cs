@@ -7,11 +7,9 @@ namespace CodingConnected.TLCFI.NET.Models.Generic
     {
         #region Properties
 
-        [JsonProperty("ticks")]
-        public uint Ticks { get; set; }
+        [JsonProperty("ticks")] public uint Ticks;
 
-        [JsonProperty("time")]
-        public ulong Time { get; set; }
+        [JsonProperty("time")] public ulong Time;
         
         #endregion // Properties
     }

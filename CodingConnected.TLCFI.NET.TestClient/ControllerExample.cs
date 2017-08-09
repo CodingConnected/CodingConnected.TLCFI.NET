@@ -102,7 +102,7 @@ namespace CodingConnected.TLCFI.NET.TestClient
             }
         }
 
-        private void OnLostControl(object sender, EventArgs e)
+        private void OnLostControl(object sender, bool expected)
         {
             // Handle loss of control; from this moment onwards, ReqState may no longer be set
         }

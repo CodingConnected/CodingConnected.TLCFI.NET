@@ -53,6 +53,8 @@
     </Content>
     <Compile Include="Attributes\ObjectIDAttribute.cs" />
     <Compile Include="Data\ITLCFIDataProvider.cs" />
+    <Compile Include="EventsArgs\ControlStateChangedEventArgs.cs" />
+    <Compile Include="Generic\MicroTimer.cs" />
     <Compile Include="Generic\XmlFileSerializer.cs" />
     <Compile Include="Helpers\Sha256Hasher.cs" />
     <Compile Include="Data\TLCFIDataProvider.cs" />

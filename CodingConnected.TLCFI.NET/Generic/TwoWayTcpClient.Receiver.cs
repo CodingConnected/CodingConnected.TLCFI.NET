@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CodingConnected.TLCFI.NET.Data;
 
 namespace CodingConnected.TLCFI.NET.Generic
 {
@@ -69,7 +70,10 @@ namespace CodingConnected.TLCFI.NET.Generic
                                         {
                                             var data = sb.ToString();
                                             sb.Clear();
-                                            _logger.Trace(" <-- {0}", data);
+                                            if (!data.Contains("Alive") || TLCFIDataProvider.Default.Settings.LogAliveTrace)
+                                            {
+                                                _logger.Trace(" <-- {0}", data);
+                                            }
                                             DataReceived?.Invoke(this, data);
                                         }
                                     }

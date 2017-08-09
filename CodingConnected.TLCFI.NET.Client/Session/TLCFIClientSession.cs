@@ -62,10 +62,11 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         public event EventHandler ReceiveAliveTimeoutOccured;
         public event EventHandler SendAliveTimeoutOccured;
         public event EventHandler Disconnected;
-        public event EventHandler SessionEnded;
+        public event EventHandler<bool> SessionEnded;
+        public event EventHandler ControlStateSetToError;
 
         #endregion // Events
-        
+
         #region Public Methods
 
         public async Task StartSessionAsync(int timeout)
@@ -98,11 +99,11 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             Client?.Dispose();
         }
 
-        public async Task CloseSessionAsync()
+        public async Task CloseSessionAsync(bool expected)
         {
             try
             {
-                StopAliveTimers();
+                _logger.Info("Deregistered succesfully from TLC.");
                 if (Connected && State.Controlling)
                 {
                     var maxdl = Task.Delay(TLCFIDataProvider.Default.Settings.MaxReleaseControlDuration,
@@ -114,9 +115,9 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                             await Task.Delay(100, _sessionCancellationToken);
                         }
                     }, _sessionCancellationToken);
-                    await SetReqControlStateAsync(ControlState.Offline);
                     await Task.WhenAny(maxdl, relct);
                 }
+                StopAliveTimers();
                 if (Connected && State.Registered)
                 {
                     try
@@ -130,7 +131,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                         // ignore
                     }
                 }
-                SessionEnded?.Invoke(this, EventArgs.Empty);
+                SessionEnded?.Invoke(this, expected);
             }
             catch (TaskCanceledException)
             {
@@ -140,7 +141,10 @@ namespace CodingConnected.TLCFI.NET.Client.Session
 
         public async Task SetReqControlStateAsync(ControlState state)
         {
-            await _jsonRpcHandler.SetReqControlStateAsync(state);
+            if (_stateManager.ControlSession.ReqControlState != state)
+            {
+                await _jsonRpcHandler.SetReqControlStateAsync(state);
+            }
         }
 
         public async Task SetIntersectionReqStateAsync(IntersectionControlState state)
@@ -197,7 +201,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         {
             StopAliveTimers();
             Disconnected?.Invoke(this, EventArgs.Empty);
-            SessionEnded?.Invoke(this, EventArgs.Empty);
+            SessionEnded?.Invoke(this, false);
         }
 
         private void OnUpdateStateCalled(object sender, ObjectStateUpdate objectstateupdate)
@@ -209,145 +213,145 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                         objectstateupdate.States.Length == 1)
                     {
                         var application = (ControlApplication)objectstateupdate.States[0];
-                        if (application != null)
+                        if (application == null)
                         {
-                            if (application == null)
+                            throw new JsonRpcException((int)ProtocolErrorCode.InvalidObjectReference,
+                                "State could not be properly cast to type ControlApplication (object type: TLCObjectType.Session).", null);
+                        }
+                        if (!application.ControlState.HasValue)
+                        {
+                            throw new JsonRpcException((int)ProtocolErrorCode.InvalidAttributeValue,
+                                "ControlState was not set on ControlApplication object.", null);
+                        }
+                        _logger.Info("TLC set Application.ControlState from {0} to {1}.",
+                            _stateManager.ControlSession.ControlState, application.ControlState);
+                        if (_stateManager.ControlSession.ControlState.HasValue && application.ControlState.HasValue)
+                            if (!TLCFIStateChecker.IsControlStateChangeOk(_stateManager.ControlSession.ControlState.Value,
+                                application.ControlState.Value))
                             {
-                                throw new JsonRpcException((int)ProtocolErrorCode.InvalidObjectReference,
-                                    "State could not be properly cast to type ControlApplication (object type: TLCObjectType.Session).", null);
+                                _logger.Warn("Invalid ControlState transition made by TLC: from {0} to {1}. Resulting behaviour is undefined.",
+                                    _stateManager.ControlSession.ControlState, application.ControlState);
                             }
-                            if (!application.ControlState.HasValue)
-                            {
-                                throw new JsonRpcException((int)ProtocolErrorCode.InvalidAttributeValue,
-                                    "ControlState was not set on ControlApplication object.", null);
-                            }
-                            _logger.Info("TLC set Application.ControlState from {0} to {1}.",
-                                _stateManager.ControlSession.ControlState, application.ControlState);
-                            if (_stateManager.ControlSession.ControlState.HasValue && application.ControlState.HasValue)
-                                if (!TLCFIStateChecker.IsControlStateChangeOk(_stateManager.ControlSession.ControlState.Value,
-                                    application.ControlState.Value))
+
+                        switch (application.ControlState)
+                        {
+                            case ControlState.Error:
+                                State.SessionControl = false;
+                                _logger.Error("TLC set Application.ControlState to ControlState.Error.");
+                                ControlStateSetToError?.Invoke(this, EventArgs.Empty);
+                                break;
+
+                            case ControlState.NotConfigured:
+                                State.SessionControl = false;
+                                // During startup, accept transition from 0 (error) to NotConfigured
+                                if (_stateManager.ControlSession.ReqControlState == ControlState.Error)
                                 {
-                                    _logger.Warn("Invalid ControlState transition made by TLC: from {0} to {1}. Resulting behaviour is undefined.",
-                                        _stateManager.ControlSession.ControlState, application.ControlState);
+                                    _logger.Info("Will confirm ControlState by setting requested state to ControlState.NotConfigured.");
+                                    Task.Run(() => SetReqControlStateAsync(ControlState.NotConfigured), _sessionCancellationToken);
                                 }
+                                // Otherwise, if not requested, this transition is false
+                                else if (_stateManager.ControlSession.ReqControlState != ControlState.NotConfigured)
+                                {
+                                    _logger.Warn("TLC set Application.ControlState to ControlState.NotConfigured. " +
+                                                 "(Requested = {0}).", _stateManager.ControlSession.ReqControlState);
+                                }
+                                break;
+                            case ControlState.Offline:
+                                State.SessionControl = false;
+                                // Accept Offline during startup
+                                if ((_stateManager.ControlSession.ReqControlState == ControlState.Error ||
+                                     _stateManager.ControlSession.ReqControlState == ControlState.NotConfigured) && 
+                                    _stateManager.ControlSession.ControlState == ControlState.Offline)
+                                {
+                                    _logger.Info("Will confirm ControlState by setting requested state from ControlState.NotConfigured to ControlState.Offline.");
+                                    Task.Run(() => SetReqControlStateAsync(ControlState.Offline), _sessionCancellationToken);
+                                }
+                                // Log Offline as false otherwise: the CLA should have requested this first
+                                else if (_stateManager.ControlSession.ReqControlState != ControlState.Offline)
+                                {
+                                    _logger.Warn(
+                                        "TLC set Application.ControlState to ControlState.Offline. (Requested = {0}).",
+                                        _stateManager.ControlSession.ReqControlState);
+                                }
+                                // Otherwise Offline was requested
+                                else
+                                {
+                                    _logger.Info("TLC set Application.ControlState to ControlState.Offline. Now awaiting instruction to request control.");
+                                }
+                                break;
+                            case ControlState.ReadyToControl:
+                                State.SessionControl = false;
+                                // Log if not as requested
+                                if (_stateManager.ControlSession.ReqControlState != ControlState.ReadyToControl)
+                                {
+                                    _logger.Error("TLC set Application.ControlState to ControlState.ReadyToControl, while requested state is {0}.", _stateManager.ControlSession.ReqControlState);
+                                }
+                                // Otherwise log awaiting StartControl
+                                else
+                                {
+                                    _logger.Info("TLC set Application.ControlState to ControlState.ReadyToControl. Now awaiting StartControl.");
+                                }
+                                break;
+                            case ControlState.InControl:
+                                // Log if not as requested
+                                if (_stateManager.ControlSession.ReqControlState != ControlState.InControl)
+                                {
+                                    _logger.Error("TLC set Application.ControlState to ControlState.InControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
+                                }
+                                // Otherwise log confirmation
+                                else
+                                {
+                                    _logger.Info("TLC set Application.ControlState to ControlState.InControl.");
+                                }
+                                break;
+                            case ControlState.StartControl:
+                                // If we requested control, take action to actually take it
+                                if (_stateManager.ControlSession.ReqControlState == ControlState.ReadyToControl)
+                                {
+                                    _logger.Info("Application.ControlState set to ControlState.StartControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
+                                    State.SessionControl = true;
+                                    Task.Run(() => SetReqControlStateAsync(ControlState.InControl), _sessionCancellationToken);
+                                }
+                                // Otherwise, log the error
+                                else
+                                {
+                                    var startControlError = "Application.ControlState set to ControlState.StartControl, but application not ready.";
+                                    _logger.Error(startControlError);
+                                    throw new JsonRpcException((int)ProtocolErrorCode.Error, startControlError, null);
+                                }
+                                break;
+                            case ControlState.EndControl:
+                                // If the application is not in Control, log the error
+                                if (_stateManager.ControlSession.ReqControlState != ControlState.InControl &&
+                                    _stateManager.ControlSession.ReqControlState != ControlState.EndControl)
+                                {
+                                    _logger.Error("TLC set Application.ControlState to ControlState.EndControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
+                                    throw new JsonRpcException((int)ProtocolErrorCode.Error, "TLC set Application.ControlState to ControlState.EndControl, but application not in control.", null);
+                                }
+                                else
+                                {
+                                    if (_stateManager.ControlSession.ReqControlState == ControlState.EndControl)
+                                    {
+                                        _logger.Info("TLC set Application.ControlState to ControlState.EndControl, which was requested.");
+                                    }
+                                    else
+                                    {
+                                        _logger.Info("TLC set Application.ControlState to ControlState.EndControl (outside request). " +
+                                                     "Confirming by setting requested state.");
+                                        Task.Run(() => SetReqControlStateAsync(ControlState.EndControl), _sessionCancellationToken);
+                                    }
+                                }
+                                break;
 
-                            switch (application.ControlState)
-                            {
-                                case ControlState.Error:
-                                    State.SessionControl = false;
-                                    _logger.Error("TLC set Application.ControlState to ControlState.Error.");
-                                    break;
-
-                                case ControlState.NotConfigured:
-                                    State.SessionControl = false;
-                                    // During startup, accept transition from 0 (error) to NotConfigured
-                                    if (_stateManager.ControlSession.ReqControlState == ControlState.Error)
-                                    {
-                                        _logger.Info("Will confirm ControlState by setting requested state to ControlState.NotConfigured.");
-                                        Task.Run(() => SetReqControlStateAsync(ControlState.NotConfigured), _sessionCancellationToken);
-                                    }
-                                    // Otherwise, if not requested, this transition is false
-                                    else if (_stateManager.ControlSession.ReqControlState != ControlState.NotConfigured)
-                                    {
-                                        _logger.Warn("TLC set Application.ControlState to ControlState.NotConfigured. " +
-                                                     "(Requested = {0}).", _stateManager.ControlSession.ReqControlState);
-                                    }
-                                    break;
-                                case ControlState.Offline:
-                                    State.SessionControl = false;
-                                    // Accept Offline during startup
-                                    if (_stateManager.ControlSession.ReqControlState == ControlState.NotConfigured)
-                                    {
-                                        _logger.Info("Will confirm ControlState by setting requested state from ControlState.NotConfigured to ControlState.Offline.");
-                                        Task.Run(() => SetReqControlStateAsync(ControlState.Offline), _sessionCancellationToken);
-                                    }
-                                    // Log Offline as false otherwise: the CLA should have requested this first
-                                    else if (_stateManager.ControlSession.ReqControlState != ControlState.Offline)
-                                    {
-                                        _logger.Warn(
-                                            "TLC set Application.ControlState to ControlState.Offline. (Requested = {0}).",
-                                            _stateManager.ControlSession.ReqControlState);
-                                    }
-                                    // Otherwise Offline was requested
-                                    else
-                                    {
-                                        _logger.Info("TLC set Application.ControlState to ControlState.Offline. Now awaiting instruction to request control.");
-                                    }
-                                    break;
-                                case ControlState.ReadyToControl:
-                                    State.SessionControl = false;
-                                    // Log if not as requested
-                                    if (_stateManager.ControlSession.ReqControlState != ControlState.ReadyToControl)
-                                    {
-                                        _logger.Error("TLC set Application.ControlState to ControlState.ReadyToControl, while requested state is {0}.", _stateManager.ControlSession.ReqControlState);
-                                    }
-                                    // Otherwise log awaiting StartControl
-                                    else
-                                    {
-                                        _logger.Info("TLC set Application.ControlState to ControlState.ReadyToControl. Now awaiting StartControl.");
-                                    }
-                                    break;
-                                case ControlState.InControl:
-                                    // Log if not as requested
-                                    if (_stateManager.ControlSession.ReqControlState != ControlState.InControl)
-                                    {
-                                        _logger.Error("TLC set Application.ControlState to ControlState.InControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
-                                    }
-                                    // Otherwise log confirmation
-                                    else
-                                    {
-                                        _logger.Info("TLC set Application.ControlState to ControlState.InControl.");
-                                    }
-                                    break;
-                                case ControlState.StartControl:
-                                    // If we requested control, take action to actually take it
-                                    if (_stateManager.ControlSession.ReqControlState == ControlState.ReadyToControl)
-                                    {
-                                        _logger.Info("Application.ControlState set to ControlState.StartControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
-                                        State.SessionControl = true;
-                                        Task.Run(() => SetReqControlStateAsync(ControlState.InControl), _sessionCancellationToken);
-                                    }
-                                    // Otherwise, log the error
-                                    else
-                                    {
-                                        var startControlError = "Application.ControlState set to ControlState.StartControl, but application not ready.";
-                                        _logger.Error(startControlError);
-                                        throw new JsonRpcException((int)ProtocolErrorCode.Error, startControlError, null);
-                                    }
-                                    break;
-                                case ControlState.EndControl:
-                                    // If the application is not in Control, log the error
-                                    if (_stateManager.ControlSession.ReqControlState != ControlState.InControl &&
-                                        _stateManager.ControlSession.ReqControlState != ControlState.EndControl)
-                                    {
-                                        _logger.Error("TLC set Application.ControlState to ControlState.EndControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
-                                        throw new JsonRpcException((int)ProtocolErrorCode.Error, "TLC set Application.ControlState to ControlState.EndControl, but application not in control.", null);
-                                    }
-                                    else
-                                    {
-                                        if (_stateManager.ControlSession.ReqControlState == ControlState.EndControl)
-                                        {
-                                            _logger.Info("TLC set Application.ControlState to ControlState.EndControl, which was requested.");
-                                        }
-                                        else
-                                        {
-                                            _logger.Info("TLC set Application.ControlState to ControlState.EndControl (outside request). " +
-                                                         "Confirming by setting requested state.");
-                                            Task.Run(() => SetReqControlStateAsync(ControlState.EndControl), _sessionCancellationToken);
-                                        }
-                                    }
-                                    break;
-
-                                default:
-                                    var error = $"Application.ControlState cannot be set to {application.ControlState}: this state is undefined.";
-                                    _logger.Error(error);
-                                    throw new JsonRpcException((int)ProtocolErrorCode.Error, error, null);
-                            }
-                            _stateManager.ControlSession.ControlState = application.ControlState;
-                            if (_stateManager.ControlSession.ControlState.Value != ControlState.Error)
-                            {
-                                _logger.Debug("Application.ControlState set to " + _stateManager.ControlSession.ControlState);
-                            }
+                            default:
+                                var error = $"Application.ControlState cannot be set to {application.ControlState}: this state is undefined.";
+                                _logger.Error(error);
+                                throw new JsonRpcException((int)ProtocolErrorCode.Error, error, null);
+                        }
+                        _stateManager.ControlSession.ControlState = application.ControlState;
+                        if (_stateManager.ControlSession.ControlState.Value != ControlState.Error)
+                        {
+                            _logger.Debug("Application.ControlState set to " + _stateManager.ControlSession.ControlState);
                         }
                     }
                     else
@@ -398,7 +402,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                 case TLCObjectType.Variable:
                     for (var i = 0; i < objectstateupdate.Objects.Ids.Length; ++i)
                     {
-                        var upob = _stateManager.FindObjectById(objectstateupdate.Objects.Ids[i]);
+                        var upob = _stateManager.FindObjectById(objectstateupdate.Objects.Ids[i], TLCFIClientStateManager.GetObjectTypeString(objectstateupdate.Objects.Type));
                         if (upob == null)
                         {
                             throw new JsonRpcException((int)ProtocolErrorCode.InvalidObjectReference, "Object " + objectstateupdate.Objects.Ids[i] + " unknown", null);

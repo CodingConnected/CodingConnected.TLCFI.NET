@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using CodingConnected.TLCFI.NET.Data;
 
 namespace CodingConnected.TLCFI.NET.Generic
 {
@@ -25,7 +26,10 @@ namespace CodingConnected.TLCFI.NET.Generic
                     _data = string.Copy(data);
                     await _writer.WriteAsync(_data);
                     _writer.Flush();
-                    _logger.Trace(" --> {0}", _data);
+                    if(!_data.Contains("Alive") || TLCFIDataProvider.Default.Settings.LogAliveTrace)
+                    {
+                        _logger.Trace(" --> {0}", _data);
+                    }
                     DataSent?.Invoke(this, _data);
                 }
                 catch (IOException)

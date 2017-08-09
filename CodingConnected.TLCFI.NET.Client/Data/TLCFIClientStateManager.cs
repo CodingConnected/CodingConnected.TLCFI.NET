@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Xml.Serialization;
 using JetBrains.Annotations;
@@ -10,6 +11,7 @@ using CodingConnected.TLCFI.NET.Exceptions;
 using CodingConnected.TLCFI.NET.Models.Generic;
 using CodingConnected.TLCFI.NET.Models.TLC;
 using CodingConnected.TLCFI.NET.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Tools;
 using NLog;
 
 namespace CodingConnected.TLCFI.NET.Client.Data
@@ -20,10 +22,13 @@ namespace CodingConnected.TLCFI.NET.Client.Data
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
         private readonly Dictionary<string, object> _staticObjects = new Dictionary<string, object>();
-        private readonly List<string> _changedObjects = new List<string>();
+        private readonly List<Tuple<string, TLCObjectType>> _changedObjects = new List<Tuple<string, TLCObjectType>> ();
 
         private ReadOnlyDictionary<string, object> StaticObjects { get; set; }
         private Dictionary<string, object> DynamicObjects { get; set; }
+
+        internal readonly Dictionary<string, ulong> RequestedStates;
+        private readonly Queue<int> _requestedStatesTimings;
 
         private readonly object _locker = new object();
 
@@ -62,11 +67,13 @@ namespace CodingConnected.TLCFI.NET.Client.Data
         [UsedImplicitly]
         public ReadOnlyCollection<Output> Outputs { get; private set; }
 
+        public double AvgResponseToRequestsTime { get; private set; }
+
         #endregion // Public Properties
 
         #region Events
 
-        internal event EventHandler<List<string>> StateChanged;
+        internal event EventHandler<List<Tuple<string, TLCObjectType>>> StateChanged;
         internal event EventHandler<Detector> DetectorStateChanged;
         internal event EventHandler<SignalGroup> SignalGroupStateChanged;
         internal event EventHandler<Input> InputStateChanged;
@@ -130,7 +137,20 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             if (SpvhGenerator != null) _staticObjects.Add("_sp_" + SpvhGenerator.Id, SpvhGenerator);
             foreach (var sg in InternalSignalGroups)
             {
-                sg.ChangedState += (o, e) => { SignalGroupStateChanged?.Invoke(this, sg); };
+                sg.ChangedState += (o, e) =>
+                {
+                    if (RequestedStates.TryGetValue("sg" + sg.Id, out ulong ticks))
+                    {
+                        _requestedStatesTimings.Enqueue((int)(TicksGenerator.Default.GetCurrentTicks() - ticks));
+                        if (_requestedStatesTimings.Count > 50)
+                        {
+                            _requestedStatesTimings.Dequeue();
+                        }
+                        AvgResponseToRequestsTime = _requestedStatesTimings.Sum() / (double)_requestedStatesTimings.Count;
+                        RequestedStates.Remove("sg" + sg.Id);
+                    }
+                    SignalGroupStateChanged?.Invoke(this, sg);
+                };
                 _staticObjects.Add("_sg_" + sg.Id, sg);
             }
             foreach (var d in InternalDetectors)
@@ -145,7 +165,21 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             }
             foreach (var o in InternalOutputs)
             {
-                o.ChangedState += (o2, e) => { OutputStateChanged?.Invoke(this, o); };
+                o.ChangedState += (o2, e) =>
+                {
+                    if (RequestedStates.TryGetValue("os" + o.Id, out ulong ticks))
+                    {
+#warning: here as above, need to correct for ticks value reset
+                        _requestedStatesTimings.Enqueue((int)(TicksGenerator.Default.GetCurrentTicks() - ticks));
+                        if (_requestedStatesTimings.Count > 50)
+                        {
+                            _requestedStatesTimings.Dequeue();
+                        }
+                        AvgResponseToRequestsTime = _requestedStatesTimings.Sum() / (double)_requestedStatesTimings.Count;
+                        RequestedStates.Remove("os" + o.Id);
+                    }
+                    OutputStateChanged?.Invoke(this, o);
+                };
                 _staticObjects.Add("_o_" + o.Id, o);
 
                 // Set exclusive: if an output belongs to an intersection, it is exclusive
@@ -198,55 +232,45 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             }
         }
 
-        internal object FindObjectById(string id)
+        internal object FindObjectById(string id, string idstr)
         {
-            if (Facilities.Id == id)
+            var obj = _staticObjects.FirstOrDefault(x => x.Key == idstr + id);
+            if (obj.Value == null)
             {
-                return Facilities;
+                obj = DynamicObjects.FirstOrDefault(x => x.Key == idstr + id);
             }
-
-            if (SpvhGenerator.Id == id)
+            if (obj.Value == null)
             {
-                return SpvhGenerator;
+                _logger.Warn("Could not find object with id {0}", id);
             }
+            return obj.Value;
+        }
 
-            object ret = InternalIntersections.FirstOrDefault(x => x.Id == id);
-            if (ret != null)
+        internal static string GetObjectTypeString(TLCObjectType type)
+        {
+            switch (type)
             {
-                return ret;
+                case TLCObjectType.Session:
+                    return "";
+                case TLCObjectType.TLCFacilities:
+                    return "_f_";
+                case TLCObjectType.Intersection:
+                    return "_int_";
+                case TLCObjectType.SignalGroup:
+                    return "_sg_";
+                case TLCObjectType.Detector:
+                    return "_d_";
+                case TLCObjectType.Input:
+                    return "_i_";
+                case TLCObjectType.Output:
+                    return "_o_";
+                case TLCObjectType.SpecialVehicleEventGenerator:
+                    return "_sp_";
+                case TLCObjectType.Variable:
+                    return "_v_";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
-
-            ret = InternalVariables.FirstOrDefault(x => x.Id == id);
-            if (ret != null)
-            {
-                return ret;
-            }
-
-            ret = InternalSignalGroups.FirstOrDefault(x => x.Id == id);
-            if (ret != null)
-            {
-                return ret;
-            }
-
-            ret = InternalDetectors.FirstOrDefault(x => x.Id == id);
-            if (ret != null)
-            {
-                return ret;
-            }
-
-            ret = InternalInputs.FirstOrDefault(x => x.Id == id);
-            if (ret != null)
-            {
-                return ret;
-            }
-
-            ret = InternalOutputs.FirstOrDefault(x => x.Id == id);
-            if (ret != null)
-            {
-                return ret;
-            }
-
-            return null;
         }
 
         internal ObjectMeta GetObjectMeta(ObjectReference objectreference, uint ticks)
@@ -319,9 +343,9 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             return meta;
         }
 
-        internal void SetObjectStateChanged(string id)
+        internal void SetObjectStateChanged(string id, TLCObjectType type)
         {
-            _changedObjects.Add(id);
+            _changedObjects.Add(new Tuple<string, TLCObjectType>(id, type));
         }
 
         #endregion // Internal Methods
@@ -369,6 +393,9 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             InternalInputs = new List<Input>();
             InternalOutputs = new List<Output>();
             SpvhGenerator = new SpecialVehicleEventGenerator();
+
+            RequestedStates = new Dictionary<string, ulong>();
+            _requestedStatesTimings = new Queue<int>(50);
         }
 
         #endregion // Constructor

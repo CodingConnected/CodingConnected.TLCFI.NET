@@ -618,7 +618,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
         private async Task SetInitialControlState(TLCFIClientSession session, TLCFIClientStateManager stateManager)
         {
-            _logger.Info("Setting initial application session state in TLC (with ControlState.Offline)");
+            _logger.Info("Setting initial application session state in TLC (with ControlState.Offline) if needed");
             try
             {
                 if(stateManager.ControlSession.ReqControlState != ControlState.Offline)

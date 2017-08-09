@@ -15,6 +15,8 @@ namespace CodingConnected.TLCFI.NET.Data
         
         public int MaxReleaseControlDuration { get; set; }
 
+        public bool LogAliveTrace { get; set; }
+
         #endregion // Properties
     }
 }

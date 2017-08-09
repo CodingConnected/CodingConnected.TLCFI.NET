@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Client.Data;
 using CodingConnected.TLCFI.NET.Client.Session;
+using CodingConnected.TLCFI.NET.EventsArgs;
 using CodingConnected.TLCFI.NET.Exceptions;
 using CodingConnected.TLCFI.NET.Models.Generic;
 using CodingConnected.TLCFI.NET.Models.TLC;
@@ -78,7 +80,12 @@ namespace CodingConnected.TLCFI.NET.Client
         public bool Configured => _session?.State?.Configured ?? false;
         public bool SessionInControl => _session?.State?.SessionControl ?? false;
         public bool IntersectionInControl => _session?.State?.IntersectionControl ?? false;
+        public double AvgResponseToRequestsTime => StateManager.AvgResponseToRequestsTime;
 
+        /// <summary>
+        /// Can be used to indicate wether or not external system are OK
+        /// If set to false, this will halt sending alive messages
+        /// </summary>
         public bool SystemsAlive
         {
             get => _session?.State?.SystemsAlive ?? false;
@@ -127,11 +134,20 @@ namespace CodingConnected.TLCFI.NET.Client
         public event EventHandler ClientInitialized;
 
         /// <summary>
-        /// Raised upon definitive loss of control; also raised when connection is lost
+        /// Raised upon definitive loss of control. The argument indicates if this was expected or not.
+        /// (true means it was expected)
         /// The client may no longer set ReqState on any object after loosing control
         /// </summary>
         [UsedImplicitly]
-        public event EventHandler LostControl;
+        public event EventHandler<bool> LostControl;
+
+        /// <summary>
+        /// Raised ending of a session. The argument indicates if this was expected or not 
+        /// (true means it was expected)
+        /// The client may no longer set ReqState on any object after loosing control
+        /// </summary>
+        [UsedImplicitly]
+        public event EventHandler<bool> SessionEnded;
 
         /// <summary>
         /// Raised upon definitive loss of control
@@ -186,15 +202,6 @@ namespace CodingConnected.TLCFI.NET.Client
                 {
                     _sessionCancellationTokenSource = new CancellationTokenSource();
                     var sessionToken = _sessionCancellationTokenSource.Token;
-
-                    if (StartControlRequestReceived == null || 
-                        EndControlRequestReceived == null ||
-                        GotControl == null ||
-                        LostControl == null)
-                    {
-                        throw new NullReferenceException(
-                            "LostControl, StartControlRequestReceived and EndControlRequestReceived event MUST be handled.");
-                    }
                     
                     StateManager = new TLCFIClientStateManager();
                     
@@ -258,7 +265,7 @@ namespace CodingConnected.TLCFI.NET.Client
                     catch (TLCFISessionException e)
                     {
                         if (e.Fatal) FatalErrorOccured = true;
-                        await _sessionManager.EndActiveSessionAsync();
+                        await _sessionManager.EndActiveSessionAsync(false);
                     }
                     catch (TaskCanceledException)
                     {
@@ -268,7 +275,7 @@ namespace CodingConnected.TLCFI.NET.Client
                         _logger.Error(
                             "Session could not be started and configured correctly and will be closed. See trace for details.");
                         _logger.Trace(e, "Session could not be started and configured correctly:");
-                        await _sessionManager.EndActiveSessionAsync();
+                        await _sessionManager.EndActiveSessionAsync(false);
                     }
                     await Task.Delay(-1, sessionToken);
                     StateManager = null;
@@ -368,17 +375,12 @@ namespace CodingConnected.TLCFI.NET.Client
             {
                 _logger.Warn("Incorrect call to SetIntersectionReqControlState: the client session does not have control. " +
                              "Were StartSessionAsync and RequestStartControl called and succesfully completed? " +
-                             "Will NOT forward request to TLC.");
+                             "Will not forward request to TLC.");
                 return;
             }
-            _logger.Debug("Storing requested state for intersection to {0}.", state);
             _userRequestedIntersectionControlState = state;
-            if (StateManager.ControlSession.ControlState != null &&
-                StateManager.ControlSession.ControlState.Value != ControlState.InControl)
-            {
-                _logger.Debug("Setting requested state for intersection to {0} in TLC.", state);
-                await _session.SetIntersectionReqStateAsync(state);
-            }
+            _logger.Debug("Setting requested state for intersection to {0} in TLC.", state);
+            await _session.SetIntersectionReqStateAsync(state);
         }
 
         /// <summary>
@@ -389,20 +391,11 @@ namespace CodingConnected.TLCFI.NET.Client
         {
             try
             {
-
+                if (_controlEndingCancellationTokenSource == null)
+                {
+                    _logger.Warn("ConfirmEndControl() called, but EndControl was not requested.");
+                }
                 _controlEndingCancellationTokenSource?.Cancel();
-                if (_userWantsControl && StateManager.ControlSession.ReqControlState != ControlState.ReadyToControl)
-                {
-                    var reqControlStateAsync = _session?.SetReqControlStateAsync(ControlState.ReadyToControl);
-                    if (reqControlStateAsync != null)
-                        await reqControlStateAsync;
-                }
-                else if (StateManager.ControlSession.ReqControlState != ControlState.Offline)
-                {
-                    var reqControlStateAsync = _session?.SetReqControlStateAsync(ControlState.Offline);
-                    if (reqControlStateAsync != null)
-                        await reqControlStateAsync;
-                }
             }
             catch (Exception e)
             {
@@ -425,9 +418,14 @@ namespace CodingConnected.TLCFI.NET.Client
         /// <summary>
         /// Attempts to gracefully end the current session, then disposes of used resources
         /// </summary>
-        public async void EndSessionAsync()
+        public async Task EndSessionAsync()
         {
-            await _sessionManager.EndActiveSessionAsync();
+            if (SessionInControl)
+            {
+                _logger.Info("EndSessionAsync called while in control: calling RequestSessionEndControl().");
+                await RequestSessionEndControl();
+            }
+            await _sessionManager.EndActiveSessionAsync(true);
             _sessionCancellationTokenSource?.Cancel();
             _sessionManager.DisposeActiveSession();
         }
@@ -444,11 +442,36 @@ namespace CodingConnected.TLCFI.NET.Client
                 _logger.Warn("SetSignalGroupReqState() may only be called when ApplicationType is Control");
                 return;
             }
-            var signalGroup = StateManager.InternalSignalGroups.First(x => x.Id == id);
-            if (signalGroup != null && signalGroup.ReqState != reqState)
+            var signalGroup = StateManager.InternalSignalGroups.FirstOrDefault(x => x.Id == id);
+            if (signalGroup != null)
             {
+                if (!((StateManager.ControlSession.ControlState == ControlState.InControl ||
+                       StateManager.ControlSession.ControlState == ControlState.EndControl) &&
+                      StateManager.Intersection.State == IntersectionControlState.Control))
+                {
+                    _logger.Warn("Not in control of intersection; may not set state of signalgroup with id {0}", signalGroup.Id);
+                    return;
+                }
+                // Check previous if a request has been made that has not yet been confirmed
+                if (StateManager.RequestedStates.ContainsKey("sg" + signalGroup.Id))
+                {
+                    _logger.Warn(
+                        "While setting ReqState to {0}: still awaiting previous request to set state for signalgroup {1} to {2}; will clear awaiting buffer.",
+                        reqState, id, signalGroup.ReqState);
+                    StateManager.RequestedStates.Remove("sg" + signalGroup.Id);
+                }
+                else if (reqState != signalGroup.State)
+                {
+                    StateManager.RequestedStates.Add("sg" + signalGroup.Id, CurrentTicks);
+                }
+                else if (reqState == signalGroup.State)
+                {
+                    _logger.Warn(
+                        "While setting ReqState to {0}: signalgroup {1} is already in that state.",
+                        reqState, id);
+                }
                 signalGroup.ReqState = reqState;
-                StateManager.SetObjectStateChanged(id);
+                StateManager.SetObjectStateChanged(id, TLCObjectType.SignalGroup);
             }
             else
             {
@@ -464,17 +487,51 @@ namespace CodingConnected.TLCFI.NET.Client
         /// </summary>
         public void SetOutputReqState(string id, int reqState)
         {
-            var output = StateManager.InternalOutputs.First(x => x.Id == id);
-            if (_config.ApplicationType == ApplicationType.Consumer ||
-                _config.ApplicationType == ApplicationType.Provider && output.Exclusive)
+
+            if (_config.ApplicationType == ApplicationType.Consumer)
             {
-                _logger.Warn("Output {0} is exclusive; SetOutputReqState() may only be called when ApplicationType is Control", id);
+                _logger.Warn("SetOutputReqState() may only be called when ApplicationType is Control or Provider");
                 return;
             }
+            var output = StateManager.InternalOutputs.FirstOrDefault(x => x.Id == id);
             if (output != null)
             {
+                if (output.Exclusive)
+                {
+                    if (_config.ApplicationType == ApplicationType.Provider)
+                    {
+                        _logger.Warn(
+                            "Output {0} is exclusive; SetOutputReqState() may only be called when ApplicationType is Control",
+                            id);
+                        return;
+                    }
+                    if (!((StateManager.ControlSession.ControlState == ControlState.InControl ||
+                           StateManager.ControlSession.ControlState == ControlState.EndControl) &&
+                          StateManager.Intersection.State == IntersectionControlState.Control))
+                    {
+                        _logger.Warn("Output {0} is exclusive; SetOutputReqState() may only be called when in control of intersection", output.Id);
+                        return;
+                    }
+                }
+                if (StateManager.RequestedStates.ContainsKey("os" + output.Id))
+                {
+                    _logger.Warn(
+                        "While setting ReqState to {0}: still awaiting previous request to set state for output {1} to {2}",
+                        reqState, id, output.ReqState);
+                    StateManager.RequestedStates.Remove("os" + output.Id);
+                }
+                else if (reqState != output.State)
+                {
+                    StateManager.RequestedStates.Add("os" + output.Id, CurrentTicks);
+                }
+                else if (reqState == output.State)
+                {
+                    _logger.Warn(
+                        "While setting ReqState to {0}: output {1} is already in that state.",
+                        reqState, id);
+                }
                 output.ReqState = reqState;
-                StateManager.SetObjectStateChanged(id);
+                StateManager.SetObjectStateChanged(id, TLCObjectType.Output);
             }
             else
             {
@@ -572,11 +629,9 @@ namespace CodingConnected.TLCFI.NET.Client
 
         #region Private Methods
 
-        private async void OnSessionControlChanged(object sender, ControlState? state)
+        private async void OnSessionControlChanged(object sender, ControlStateChangedEventArgs state)
         {
-            // We handle only StartControl and EndControl, cause those are relevant for the public API
-            // For other states, we invoke LostControl if we are in control till now
-            switch (state)
+            switch (state.NewState)
             {
                 case ControlState.StartControl:
                     _logger.Info("Received signal to take control from TLC");
@@ -586,35 +641,37 @@ namespace CodingConnected.TLCFI.NET.Client
                     _logger.Info("Received signal to release control from TLC. Leaving a maximum of 180 seconds to release control.");
                     try
                     {
-                        EndControlRequestReceived?.Invoke(this, EventArgs.Empty);
-                        if (!_userWantsControl)
-                        {
-                            await _session.SetReqControlStateAsync(ControlState.Offline);
-                        }
-                        else
-                        {
-                            await _session.SetReqControlStateAsync(ControlState.ReadyToControl);
-                        }
-                        if (_session.State.Controlling)
+                        if (state.OldState == ControlState.InControl &&  _session.State.IntersectionControl)
                         {
                             _controlEndingCancellationTokenSource = new CancellationTokenSource();
+                            EndControlRequestReceived?.Invoke(this, EventArgs.Empty);
+                            var start = DateTime.Now;
                             await Task.Run(async () =>
                             {
                                 try
                                 {
                                     await Task.Delay(180000, _controlEndingCancellationTokenSource.Token);
+                                    _logger.Error("Control was not released after 180 seconds; will force ending control.");
                                 }
                                 catch (TaskCanceledException)
                                 {
-                                    return;
+                                    _logger.Info("Control was released after {0} seconds.", DateTime.Now.Subtract(start).TotalSeconds);
                                 }
-                                _logger.Error("Control was not relieved after 180 seconds; will force ending control, and set application state to Offline.");
-                                await _session.SetReqControlStateAsync(ControlState.Offline);
                             }, _mainCancellationToken);
+                            if (_userWantsControl && StateManager.ControlSession.ReqControlState != ControlState.ReadyToControl)
+                            {
+                                await _session?.SetReqControlStateAsync(ControlState.ReadyToControl);
+                            }
+                            else if (StateManager.ControlSession.ReqControlState != ControlState.Offline)
+                            {
+                                await _session?.SetReqControlStateAsync(ControlState.Offline);
+                            }
+                            LostControl?.Invoke(this, true);
                         }
                     }
                     catch (TaskCanceledException)
                     {
+                        _controlEndingCancellationTokenSource.Cancel();
                     }
                     break;
                 case ControlState.InControl:
@@ -643,7 +700,7 @@ namespace CodingConnected.TLCFI.NET.Client
                     if (StateManager.ControlSession.ReqControlState != null && 
                         StateManager.ControlSession.ReqControlState.Value == ControlState.InControl)
                     {
-                        LostControl?.Invoke(this, EventArgs.Empty);
+                        LostControl?.Invoke(this, false);
                     }
                     break;
                 default:
@@ -651,9 +708,9 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
-        private void OnSessionEnded(object sender, EventArgs e)
+        private void OnSessionEnded(object sender, bool expected)
         {
-            LostControl?.Invoke(this, EventArgs.Empty);
+            SessionEnded?.Invoke(this, expected);
         }
 
         private void OnIntersectionControlChanged(object sender, IntersectionControlState? state)
@@ -684,35 +741,26 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
-        private async void StateManager_StateChanged(object sender, List<string> ids)
+        private async void StateManager_StateChanged(object sender, List<Tuple<string, TLCObjectType>> ids)
         {
             if (_settingState)
             {
                 _logger.Warn("StateManager_StateChanged was called while a previous call was still being handled.");
                 return;
             }
-            _settingState = true;
-
-            var intcontrol = ((StateManager.ControlSession.ControlState == ControlState.InControl ||
-                              StateManager.ControlSession.ControlState == ControlState.EndControl) &&
-                              StateManager.Intersection.State == IntersectionControlState.Control);
-
             if (ids.Count == 0)
             {
                 return;
             }
+            _settingState = true;
 
             // Build a dictionary with a list of changed objects per object type
             var update = new Dictionary<TLCObjectType, List<TLCObjectBase>>();
             foreach (var id in ids)
             {
-                var obj = StateManager.FindObjectById(id);
+
+                var obj = StateManager.FindObjectById(id.Item1, TLCFIClientStateManager.GetObjectTypeString(id.Item2));
                 var obt = ((TLCObjectBase)obj).ObjectType;
-                if (!intcontrol && (obt == TLCObjectType.Output && ((Output)obj).Exclusive || obt == TLCObjectType.SignalGroup))
-                {
-                    _logger.Warn("Not in control of intersection; may not set state of element of type {0} with id {1}", obt, ((TLCObjectBase)obj).Id);
-                    continue;
-                }
 
                 var upo = (TLCObjectBase)obj;
                 if (!update.ContainsKey(obt))
@@ -733,7 +781,7 @@ namespace CodingConnected.TLCFI.NET.Client
                     {
                         Objects = new ObjectReference()
                         {
-                            Ids = ids.ToArray(),
+                            Ids = t.Value.Select(x => x.Id).ToArray(),
                             Type = t.Key
                         },
                         States = t.Value.Select(x => x.GetState()).ToArray()

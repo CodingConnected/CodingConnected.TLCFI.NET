@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Dynamic;
+using CodingConnected.TLCFI.NET.EventsArgs;
 using CodingConnected.TLCFI.NET.Models.Generic;
 using CodingConnected.TLCFI.NET.Models.TLC.Base;
 using Newtonsoft.Json;
@@ -114,9 +115,10 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
             get => _controlState;
             set
             {
+                var args = new ControlStateChangedEventArgs(value, _controlState);
                 _controlState = value;
                 _controlStateChanged = true;
-                HasControlStateChanged?.Invoke(this, value);
+                HasControlStateChanged?.Invoke(this, args);
             }
         }
 
@@ -135,7 +137,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
 
         #region Events
 
-        public event EventHandler<ControlState?> HasControlStateChanged;
+        public event EventHandler<ControlStateChangedEventArgs> HasControlStateChanged;
 
         #endregion // Events
 

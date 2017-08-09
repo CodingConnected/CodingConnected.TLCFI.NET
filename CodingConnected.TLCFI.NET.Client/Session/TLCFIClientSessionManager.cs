@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Threading;
@@ -37,7 +38,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         [UsedImplicitly]
         public event EventHandler TLCSessionStarted;
         [UsedImplicitly]
-        public event EventHandler TLCSessionEnded;
+        public event EventHandler<bool> TLCSessionEnded;
 
         #endregion // Events
 
@@ -85,6 +86,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             _activeSession = session;
             session.SessionEnded += OnSessionEnded;
             session.Disconnected += OnSessionDisconnected;
+            session.ControlStateSetToError += OnSessionControlStateSetToError;
             session.ReceiveAliveTimeoutOccured += OnSessionReceiveAliveTimeout;
 
             var watch = new Stopwatch();
@@ -134,9 +136,9 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             return session;
         }
 
-        public async Task EndActiveSessionAsync()
+        public async Task EndActiveSessionAsync(bool expected)
         {
-            var closeSessionAsync = _activeSession?.CloseSessionAsync();
+            var closeSessionAsync = _activeSession?.CloseSessionAsync(expected);
             if (closeSessionAsync != null) await closeSessionAsync;
             _tokenSource.Cancel();
         }
@@ -160,6 +162,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                 _activeSession.SessionEnded -= OnSessionEnded;
                 _activeSession.Disconnected -= OnSessionDisconnected;
                 _activeSession.ReceiveAliveTimeoutOccured -= OnSessionReceiveAliveTimeout;
+                _activeSession.ControlStateSetToError -= OnSessionControlStateSetToError;
                 _activeSession.DisposeSession();
 
                 _logger.Info("Session with {0}:{1} ended, closed and disposed.",
@@ -190,7 +193,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
 
             try
             {
-                await _activeSession.CloseSessionAsync();
+                await _activeSession.CloseSessionAsync(false);
                 _tokenSource?.Cancel();
             }
             catch (TaskCanceledException)
@@ -203,10 +206,29 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             }
         }
 
-        private void OnSessionEnded(object sender, EventArgs e)
+        private async void OnSessionControlStateSetToError(object sender, EventArgs e)
+        {
+            _logger.Info("Control state set to error; closing session.");
+
+            try
+            {
+                await _activeSession.CloseSessionAsync(false);
+                _tokenSource?.Cancel();
+            }
+            catch (TaskCanceledException)
+            {
+                _tokenSource?.Cancel();
+            }
+            finally
+            {
+                DisposeActiveSession();
+            }
+        }
+
+        private void OnSessionEnded(object sender, bool expected)
         {
             DisposeActiveSession();
-            TLCSessionEnded?.Invoke(this, null);
+            TLCSessionEnded?.Invoke(this, expected);
         }
 
         #endregion // Private Methods
