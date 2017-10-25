@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TLCFISettings>
+  <AliveSendTimeOut>2000</AliveSendTimeOut>
+  <AliveReceiveTimeOut>5000</AliveReceiveTimeOut>
+  <MaxRpcDuration>1000</MaxRpcDuration>
+  <MaxRpcDurationSession>1000</MaxRpcDurationSession>
+  <BootYellowFlashTime>5</BootYellowFlashTime>
+  <BootYellowTime>3</BootYellowTime>
+  <AutoReconnected>false</AutoReconnected>
+  <ReleaseControlTime>30000</ReleaseControlTime>
+</TLCFISettings>

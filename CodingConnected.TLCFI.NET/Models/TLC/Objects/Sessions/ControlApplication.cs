@@ -33,7 +33,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
         // NON FI
 
         [JsonIgnore]
-        public override ApplicationType SessionType => ApplicationType.Control;
+        public override ApplicationType? SessionType => ApplicationType.Control;
 
         [JsonIgnore]
         public override TLCObjectType ObjectType => TLCObjectType.Session;

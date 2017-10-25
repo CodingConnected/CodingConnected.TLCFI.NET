@@ -36,6 +36,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         private readonly TLCFIClientSessionJsonRpcHandler _jsonRpcHandler;
         private readonly TLCFIClientStateManager _stateManager;
         private int _aliveSendFailCounter;
+        private DateTime _gotIntersectionControlTime;
 
         #endregion // Fields
 
@@ -64,6 +65,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         public event EventHandler Disconnected;
         public event EventHandler<bool> SessionEnded;
         public event EventHandler ControlStateSetToError;
+        public event EventHandler<ObjectEvent> EventOccured;
 
         #endregion // Events
 
@@ -103,7 +105,6 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         {
             try
             {
-                _logger.Info("Deregistered succesfully from TLC.");
                 if (Connected && State.Controlling)
                 {
                     var maxdl = Task.Delay(TLCFIDataProvider.Default.Settings.MaxReleaseControlDuration,
@@ -276,7 +277,11 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                                 // Otherwise Offline was requested
                                 else
                                 {
-                                    _logger.Info("TLC set Application.ControlState to ControlState.Offline. Now awaiting instruction to request control.");
+                                    _logger.Info("TLC set Application.ControlState to ControlState.Offline.");
+                                    if (_stateManager.ControlSession.Type == ApplicationType.Control)
+                                    {
+                                        _logger.Info("Instruction to request control may now be send using RequestSessionStartControl().");
+                                    }
                                 }
                                 break;
                             case ControlState.ReadyToControl:
@@ -310,6 +315,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                                 {
                                     _logger.Info("Application.ControlState set to ControlState.StartControl. (Requested = {0}).", _stateManager.ControlSession.ReqControlState);
                                     State.SessionControl = true;
+                                    _gotIntersectionControlTime = DateTime.Now;
                                     Task.Run(() => SetReqControlStateAsync(ControlState.InControl), _sessionCancellationToken);
                                 }
                                 // Otherwise, log the error
@@ -334,8 +340,12 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                                     {
                                         _logger.Info("TLC set Application.ControlState to ControlState.EndControl, which was requested.");
                                     }
-                                    else
+                                    else 
                                     {
+                                        if (DateTime.Now.Subtract(_gotIntersectionControlTime) < TimeSpan.FromSeconds(180))
+                                        {
+                                            _logger.Warn("TLC requested EndControl less than 180 after StartControl: {0} seconds.", DateTime.Now.Subtract(_gotIntersectionControlTime).TotalSeconds);
+                                        }
                                         _logger.Info("TLC set Application.ControlState to ControlState.EndControl (outside request). " +
                                                      "Confirming by setting requested state.");
                                         Task.Run(() => SetReqControlStateAsync(ControlState.EndControl), _sessionCancellationToken);
@@ -439,6 +449,28 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             }
         }
 
+        private void OnNotifyEventCalled(object sender, ObjectEvent objectevent)
+        {
+            switch (objectevent.Objects.Type)
+            {
+                case TLCObjectType.Session:
+                case TLCObjectType.Detector:
+                case TLCObjectType.SpecialVehicleEventGenerator:
+                    EventOccured?.Invoke(this, objectevent);
+                    break;
+                case TLCObjectType.TLCFacilities:
+                case TLCObjectType.Intersection:
+                case TLCObjectType.SignalGroup:
+                case TLCObjectType.Input:
+                case TLCObjectType.Output:
+                case TLCObjectType.Variable:
+                    _logger.Warn("NotifyEvent() was called with object type {0}. This TLC-FI object type has no defined events.", objectevent.Objects.Type);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
         #endregion // Private Methods
 
         #region Constructor
@@ -464,7 +496,8 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                 _aliveReceivedTimer.Stop();
                 _aliveReceivedTimer.Start();
             };
-            _jsonRpcHandler.UpdateStateCalled += (o, e) => { OnUpdateStateCalled(this, e); };
+            _jsonRpcHandler.UpdateStateCalled += OnUpdateStateCalled;
+            _jsonRpcHandler.NotifyEventCalled += OnNotifyEventCalled;
         }
 
         #endregion // Constructor

@@ -6,7 +6,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC.Base
     {
         #region Properties
 
-        public abstract ApplicationType SessionType { get; }
+        public abstract ApplicationType? SessionType { get; }
 
         #endregion // Properties
     }

@@ -80,7 +80,6 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
             {
                 _reqState = value;
                 _reqStateChanged = true;
-                StateTicks = TicksGenerator.Default.GetCurrentTicks();
             }
         }
 

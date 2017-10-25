@@ -36,6 +36,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         public event EventHandler ReceivedAlive;
 
         public event EventHandler<ObjectStateUpdate> UpdateStateCalled; 
+        public event EventHandler<ObjectEvent> NotifyEventCalled;
 
         #endregion // Events
 
@@ -105,15 +106,13 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         public AliveObject Alive(AliveObject alive)
         {
             ReceivedAlive?.Invoke(this, EventArgs.Empty);
-            //return _sessionState.SystemsAlive ? alive : null;
             return alive;
         }
 
         [JsonRpcMethod]
         public void NotifyEvent(ObjectEvent objectevent)
         {
-            _logger.Info("NotifyEvent was called via Json-Rpr: " + objectevent);
-            // TODO: handle events
+            NotifyEventCalled?.Invoke(this, objectevent);
         }
 
         [JsonRpcMethod]

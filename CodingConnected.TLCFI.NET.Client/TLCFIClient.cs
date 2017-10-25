@@ -45,6 +45,8 @@ namespace CodingConnected.TLCFI.NET.Client
         private bool _userWantsControl;
         private IntersectionControlState _userRequestedIntersectionControlState;
 
+        private bool _sessionStarted;
+
         private bool _settingState;
 
         #endregion // Fields
@@ -181,6 +183,13 @@ namespace CodingConnected.TLCFI.NET.Client
         [UsedImplicitly]
         public event EventHandler<IntersectionControlState> IntersectionStateChanged;
 
+        /// <summary>
+        /// Raised when a TLCFI event occurs.
+        /// <remarks>Exposes raw event data. A future version of TLCFI.NET may (also) expose processed data.</remarks>
+        /// </summary>
+        [UsedImplicitly]
+        public event EventHandler<ObjectEvent> EventOccured;
+
         #endregion // Events
 
         #region Public Methods
@@ -195,15 +204,16 @@ namespace CodingConnected.TLCFI.NET.Client
         /// unless AutoReconnect is set to false</remarks>
         public async Task StartSessionAsync(CancellationToken token)
         {
+            _sessionStarted = true;
             do
             {
                 try
                 {
                     _sessionCancellationTokenSource = new CancellationTokenSource();
                     var sessionToken = _sessionCancellationTokenSource.Token;
-                    
+
                     StateManager = new TLCFIClientStateManager();
-                    
+
                     _session = await _sessionManager.GetNewSession(StateManager, sessionToken);
                     if (_session == null)
                     {
@@ -213,27 +223,6 @@ namespace CodingConnected.TLCFI.NET.Client
                         }
                         continue;
                     }
-
-                    _session.SessionEnded += (o, e) =>
-                    {
-#warning TODO: this check does not work this way.
-                        //if (StateManager?.Session?.SessionType != _config.ApplicationType)
-                        //{
-                        //    _logger.Fatal("The application type is configured differently in the TLC. Local config: {0}, remote: {1}. Will no longer reconnect.", _config.ApplicationType, StateManager?.Session?.SessionType);
-                        //    FatalErrorOccured = true;
-                        //}
-                        if (StateManager?.ControlSession?.ControlState != null && 
-                            StateManager.ControlSession.ControlState.Value == ControlState.Error)
-                        {
-                            _sessionErrorCount++;
-                            if (_sessionErrorCount >= _config.MaxSessionErrorCount)
-                            {
-                                _logger.Fatal("The session state was set to ControlState.Error {0} times. Will no longer reconnect.", _config.MaxSessionErrorCount);
-                                FatalErrorOccured = true;
-                            }
-                        }
-                        _sessionCancellationTokenSource.Cancel();
-                    };
 
                     // Give the TLC some time (in case starting the session takes time)
                     await Task.Delay(_config.RegisterDelayAfterConnecting, sessionToken);
@@ -281,9 +270,10 @@ namespace CodingConnected.TLCFI.NET.Client
                 }
                 catch (TaskCanceledException)
                 {
-                    
+
                 }
-            } while (_config.AutoReconnect && 
+            } while (_sessionStarted == true &&
+                     _config.AutoReconnect && 
                      !FatalErrorOccured && 
                      !token.IsCancellationRequested);
         }
@@ -377,6 +367,10 @@ namespace CodingConnected.TLCFI.NET.Client
                              "Will not forward request to TLC.");
                 return;
             }
+            if (StateManager.Intersection.State == state)
+            {
+                _logger.Warn("While setting intersection state to {0}: intersection is already in that state.", state);
+            }
             _userRequestedIntersectionControlState = state;
             _logger.Debug("Setting requested state for intersection to {0} in TLC.", state);
             await _session.SetIntersectionReqStateAsync(state);
@@ -416,9 +410,11 @@ namespace CodingConnected.TLCFI.NET.Client
 
         /// <summary>
         /// Attempts to gracefully end the current session, then disposes of used resources
+        /// This will cause automatic reconnection (if configured) to stop
         /// </summary>
         public async Task EndSessionAsync()
         {
+            _sessionStarted = false;
             if (SessionInControl)
             {
                 _logger.Info("EndSessionAsync called while in control: calling RequestSessionEndControl().");
@@ -674,6 +670,21 @@ namespace CodingConnected.TLCFI.NET.Client
                     }
                     break;
                 case ControlState.InControl:
+                    foreach (var sg in StateManager.InternalSignalGroups)
+                    {
+                        sg.ReqState = null;
+                        sg.ResetChanged();
+                    }
+                    foreach (var os in StateManager.InternalOutputs)
+                    {
+                        os.ReqState = null;
+                        os.ResetChanged();
+                    }
+                    foreach (var it in StateManager.InternalIntersections)
+                    {
+                        it.ReqState = null;
+                        it.ResetChanged();
+                    }
                     GotControl?.Invoke(this, EventArgs.Empty);
                     if (StateManager.Intersection.State != null &&
                         StateManager.Intersection.State.Value != IntersectionControlState.Control &&
@@ -707,8 +718,31 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
+        private void OnSessionStarted(object sender, TLCFIClientSession session)
+        {
+
+        }
+
         private void OnSessionEnded(object sender, bool expected)
         {
+            if (StateManager?.Session?.SessionType.HasValue == true &&
+                StateManager?.Session?.SessionType.Value != _config?.ApplicationType)
+            {
+                _logger.Fatal("The application type is configured differently in the TLC. Local config: {0}, remote: {1}. Will no longer reconnect.", _config.ApplicationType, StateManager?.Session?.SessionType);
+                FatalErrorOccured = true;
+            }
+            if (StateManager?.ControlSession?.ControlState != null &&
+                StateManager.ControlSession.ControlState.Value == ControlState.Error)
+            {
+                _sessionErrorCount++;
+                if (_sessionErrorCount >= _config.MaxSessionErrorCount)
+                {
+                    _logger.Fatal("The session state was set to ControlState.Error {0} times. Will no longer reconnect.", _config.MaxSessionErrorCount);
+                    FatalErrorOccured = true;
+                }
+            }
+            _sessionCancellationTokenSource.Cancel();
+
             SessionEnded?.Invoke(this, expected);
         }
 
@@ -803,6 +837,11 @@ namespace CodingConnected.TLCFI.NET.Client
             var endPoint = new IPEndPoint(IPAddress.Parse(_config.RemoteAddress), config.RemotePort);
             _sessionManager = new TLCFIClientSessionManager(endPoint);
             _sessionManager.TLCSessionEnded += OnSessionEnded;
+            _sessionManager.TLCSessionStarted += OnSessionStarted;
+            _sessionManager.TLCSessionEventOccured += (o, e) =>
+            {
+                EventOccured?.Invoke(this, e);
+            };
             _clientInitializer = new TLCFIClientInitializer(_config);
         }
 

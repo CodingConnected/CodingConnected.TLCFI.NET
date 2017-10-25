@@ -70,10 +70,15 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
                     _stateChanged = true;
                     ChangedState?.Invoke(this, EventArgs.Empty);
                     StateTicks = TicksGenerator.Default.GetCurrentTicks();
-                }
-                else
+				}
+				else if (!value.HasValue)
                 {
-                    _logger.Warn("Output.State set to invalid value: {0}", value);
+	                _state = null;
+	                _stateChanged = true;
+                }
+				else
+                {
+                    _logger.Warn("Input.State set to invalid value: {0}", value);
                 }
             }
         }

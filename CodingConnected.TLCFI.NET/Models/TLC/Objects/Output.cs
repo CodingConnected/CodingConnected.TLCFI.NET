@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Dynamic;
 using CodingConnected.TLCFI.NET.Tools;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NLog;
 
@@ -66,13 +67,17 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
                 {
                     _reqState = value;
                     _reqStateChanged = true;
-                    StateTicks = TicksGenerator.Default.GetCurrentTicks();
                 }
-                else
+				else if (!value.HasValue)
                 {
-                    throw new ArgumentOutOfRangeException();
+	                _reqState = null;
+					_reqStateChanged = true;
+				}
+				else
+                {
+	                _logger.Warn("Output.State set to invalid value: {0}", value);
                 }
-            }
+			}
         }
 
         [JsonProperty("state")]

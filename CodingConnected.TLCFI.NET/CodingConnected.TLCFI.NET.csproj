@@ -31,9 +31,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CodingConnected.JsonRPC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CodingConnected.JsonRPC\CodingConnected.JsonRPC\bin\Debug\CodingConnected.JsonRPC.dll</HintPath>
+    <Reference Include="CodingConnected.JsonRPC">
+      <HintPath>..\..\CodingConnected.JsonRPC\CodingConnected.JsonRPC\bin\Release\CodingConnected.JsonRPC.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -95,8 +94,8 @@
     <Compile Include="Models\Generic\ProtocolVersion.cs" />
     <Compile Include="Models\Generic\RegistrationReply.cs" />
     <Compile Include="Models\Generic\RegistrationRequest.cs" />
-    <Compile Include="Models\Generic\SessionEvent.cs" />
-    <Compile Include="Models\Generic\SessionEventInformation.cs" />
+    <Compile Include="Models\Events\SessionEvent.cs" />
+    <Compile Include="Models\Events\SessionEventInformation.cs" />
     <Compile Include="Models\TLC\Base\TLCIntersectionObjectBase.cs" />
     <Compile Include="Models\TLC\Base\TLCObjectBase.cs" />
     <Compile Include="Models\TLC\Base\TLCSessionBase.cs" />

@@ -89,14 +89,22 @@ namespace CodingConnected.TLCFI.NET.Client
             try
             {
                 // Register with TLC
-                var reply = await session.TLCProxy.RegisterAsync(new RegistrationRequest
+                var rr = new RegistrationRequest
                 {
                     Username = _config.Username,
                     Password = _config.Password,
                     Version = TLCFIDataProvider.Default.ProtocolVersion,
-                    Type = ApplicationType.Control,
-                    Uri = new Uri(_config.IveraUri)
-                }, token);
+                    Type = ApplicationType.Control
+                };
+                if (!string.IsNullOrWhiteSpace(_config.IveraUri))
+                {
+                    rr.Uri = new Uri(_config.IveraUri);
+                }
+                else
+                {
+                    rr.Uri = new Uri("http://10.0.0.0:12345");
+                }
+                var reply = await session.TLCProxy.RegisterAsync(rr, token);
 
                 if (reply == null) throw new RegistrationFailedException("Received null as a reply.");
 

@@ -141,6 +141,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
                 {
                     if (RequestedStates.TryGetValue("sg" + sg.Id, out ulong ticks))
                     {
+                        // note: wrapping around uint.MaxValue goes by itself in C#
                         _requestedStatesTimings.Enqueue((int)(TicksGenerator.Default.GetCurrentTicks() - ticks));
                         if (_requestedStatesTimings.Count > 50)
                         {
@@ -169,7 +170,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
                 {
                     if (RequestedStates.TryGetValue("os" + o.Id, out ulong ticks))
                     {
-#warning: here as above, need to correct for ticks value reset
+                        // note: wrapping around uint.MaxValue goes by itself in C#
                         _requestedStatesTimings.Enqueue((int)(TicksGenerator.Default.GetCurrentTicks() - ticks));
                         if (_requestedStatesTimings.Count > 50)
                         {

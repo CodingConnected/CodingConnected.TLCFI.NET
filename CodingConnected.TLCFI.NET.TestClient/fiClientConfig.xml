@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<TLCFIClientConfig>
+
+  <!-- remote endpoint -->
+  <RemoteAddress>127.0.0.0</RemoteAddress>
+  <RemotePort>11501</RemotePort>
+
+  <!-- tlcfi registration login data -->
+  <Username>Control1</Username>
+  <Password>Im?h@ppy!2meet(&lt;you&gt;)&amp;5isSpeci@l</Password>
+
+  <!-- tlcfi application settings -->
+  <ApplicationType>Control</ApplicationType>
+  <RemoteIntersectionId>TINT1</RemoteIntersectionId>
+  <StartCapability>Cleared</StartCapability>
+  <EndCapability>Cleared</EndCapability>
+
+  <!-- tlcfi client settings -->
+  <RegisterDelayAfterConnecting>1000</RegisterDelayAfterConnecting>
+  <UseIdsFromTLCForSubscription>false</UseIdsFromTLCForSubscription>
+  <SubscribeToAllOutputs>true</SubscribeToAllOutputs>
+  <AutoReconnect>true</AutoReconnect>
+  <MaxSessionErrorCount>5</MaxSessionErrorCount>
+
+
+  <SignalGroupIds>
+    <Id>fc02</Id>
+    <Id>fc03</Id>
+    <Id>fc05</Id>
+    <Id>fc07</Id>
+    <Id>fc08</Id>
+    <Id>21</Id>
+    <Id>31</Id>
+  </SignalGroupIds>
+  <DetectorIds>
+    <Id>d2</Id>
+    <Id>d3</Id>
+    <Id>d5</Id>
+    <Id>d7</Id>
+    <Id>d8</Id>
+    <Id>dk-21</Id>
+    <Id>dk31_1</Id>
+    <Id>dk31_2</Id>
+    <Id>ds2</Id>
+  </DetectorIds>
+  <OutputIds>
+    <Id>exclOutputA</Id>
+    <Id>exclOutputB</Id>
+    <Id>1</Id>
+    <Id>2</Id>
+    <Id>fix</Id>
+    <Id>w21</Id>
+    <Id>w31</Id>
+  </OutputIds>
+  <InputIds>
+    <Id>inputA</Id>
+    <Id>inputB</Id>
+    <Id>1</Id>
+    <Id>2</Id>
+    <Id>fix</Id>
+  </InputIds>
+  <VariableIds>
+    <Id>varA</Id>
+    <Id>1</Id>
+    <Id>aVeryLongVariableNameIncludingTheAllowedSpecialCharacters-_</Id>
+  </VariableIds>
+
+</TLCFIClientConfig>

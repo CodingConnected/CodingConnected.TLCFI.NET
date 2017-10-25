@@ -4,6 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Client.Data;
+using CodingConnected.TLCFI.NET.Models.Generic;
 using JetBrains.Annotations;
 using NLog;
 
@@ -35,9 +36,11 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         [UsedImplicitly]
         public event EventHandler<int> ConnectingFailed;
         [UsedImplicitly]
-        public event EventHandler TLCSessionStarted;
+        public event EventHandler<TLCFIClientSession> TLCSessionStarted;
         [UsedImplicitly]
         public event EventHandler<bool> TLCSessionEnded;
+        [UsedImplicitly]
+        public event EventHandler<ObjectEvent> TLCSessionEventOccured;
 
         #endregion // Events
 
@@ -45,13 +48,19 @@ namespace CodingConnected.TLCFI.NET.Client.Session
 
         public async Task<TLCFIClientSession> GetNewSession(TLCFIClientStateManager stateManager, CancellationToken token)
         {
+            if (token.IsCancellationRequested)
+                return null;
+
             lock (_locker)
             {
                 if (_activeSession != null && !_activeSession.Connected)
                 {
+                    _logger.Warn("A session with {0}:{1} already exists, but is not connected. It will be disposed of.",
+                        _activeSession.RemoteEndPoint.Address, _activeSession.RemoteEndPoint.Port);
                     DisposeActiveSession();
+                    return null;
                 }
-                else if (_activeSession != null)
+                if (_activeSession != null)
                 {
                     _logger.Warn("There already is a connected session with {0}:{1}. Simultaneous sessions are not allowed.",
                         _activeSession.RemoteEndPoint.Address, _activeSession.RemoteEndPoint.Port);
@@ -63,7 +72,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             if (DateTime.Now.Subtract(_lastSuccesfulRegister).TotalSeconds < 42)
             {
                 var remaining = (int)(42 - DateTime.Now.Subtract(_lastSuccesfulRegister).TotalSeconds) + 1;
-                _logger.Info("Need 42 seconds between succesful register calls. Still need to wait {0} seconds.",
+                _logger.Info("Need 42 seconds between succesful register calls. Still need to wait {0} seconds. ",
                     remaining);
                 await Task.Run(async () =>
                 {
@@ -87,6 +96,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             session.Disconnected += OnSessionDisconnected;
             session.ControlStateSetToError += OnSessionControlStateSetToError;
             session.ReceiveAliveTimeoutOccured += OnSessionReceiveAliveTimeout;
+            session.EventOccured += OnSessionEventOccured;
 
             var watch = new Stopwatch();
             watch.Reset();
@@ -130,7 +140,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             }
 
             _logger.Info("TCP session with {0}:{1} started", sesIp, sesPort);
-            TLCSessionStarted?.Invoke(this, null);
+            TLCSessionStarted?.Invoke(this, session);
 
             return session;
         }
@@ -139,7 +149,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         {
             var closeSessionAsync = _activeSession?.CloseSessionAsync(expected);
             if (closeSessionAsync != null) await closeSessionAsync;
-            _tokenSource.Cancel();
+            DisposeActiveSession();
         }
 
         public void ResetConnectionRetryTimers()
@@ -158,17 +168,18 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                     return;
                 }
 
+                _tokenSource?.Cancel();
+
                 _activeSession.SessionEnded -= OnSessionEnded;
                 _activeSession.Disconnected -= OnSessionDisconnected;
                 _activeSession.ReceiveAliveTimeoutOccured -= OnSessionReceiveAliveTimeout;
                 _activeSession.ControlStateSetToError -= OnSessionControlStateSetToError;
+                _activeSession.EventOccured -= OnSessionEventOccured;
                 _activeSession.DisposeSession();
 
                 _logger.Info("Session with {0}:{1} ended, closed and disposed.",
                     (object) _activeSession.RemoteEndPoint.Address,
                     (object) _activeSession.RemoteEndPoint.Port);
-
-                _tokenSource?.Cancel();
 
                 _activeSession = null;
             }
@@ -228,6 +239,11 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         {
             DisposeActiveSession();
             TLCSessionEnded?.Invoke(this, expected);
+        }
+
+        private void OnSessionEventOccured(object sender, ObjectEvent objectEvent)
+        {
+            TLCSessionEventOccured?.Invoke(this, objectEvent);
         }
 
         #endregion // Private Methods
