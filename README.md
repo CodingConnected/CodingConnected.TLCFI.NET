@@ -1,6 +1,15 @@
 # TLC-FI.NET
 
-[TOC]
+- [TLC-FI.NET](#tlc-finet)
+  * [Overview](#overview)
+    + [Building the libary](#building-the-libary)
+    + [Compatibility](#compatibility)
+  * [Using the API: the TLCFIClient class](#using-the-api--the-tlcficlient-class)
+    + [Use case: using TLCFIClient in a CLA](#use-case--using-tlcficlient-in-a-cla)
+    + [Constructor](#constructor)
+    + [Events](#events)
+    + [Functions](#functions)
+  * [Other classes](#other-classes)
 
 ## Overview
 
