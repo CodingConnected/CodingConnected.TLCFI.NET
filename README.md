@@ -90,4 +90,4 @@ Alongside events, the TLCFIClient class exposes a number of functions, meant to 
 - `EndSessionAsync` this causes the session to end, and the reconnect loop to be broken. The session will be ended gracefully if possible, by releasing control, and logging out if applicable.
 
 ## Other classes
-The library has other public classes aside from TLCFIClient and TLCFIClientConfig. 
+The library has other public classes aside from TLCFIClient and TLCFIClientConfig. The public intrafcing of these classes is still in development. This readme will be filled with further details as the API for those classes becomes more stable.
