@@ -19,6 +19,8 @@ To properly facilitate common development scenarios in the field of traffic mana
 
 This documentation assumes working knowledge of the TLC-FI and Generic-FI IDD's. It is thus assumed the reader and potential user of the API, is familiar with terms such as TLC and CLA, the roles of TLC and CLA, as well as the supposed chain of commands and events that may occur during a session between an CLA and a TLC.
 
+> Note (25-oct-2017): this project is in active development and is not yet meant for use in a production environment. Extensive testing has taken place, with more testing underway. The library may, in its current form, expose instability. The API may change in minor ways towards a first stable release, planned early 2018.
+
 ### Building the libary
 The Visual solution uses Paket at its dependency manager. Therefor, in order to build the project, first retrieve the dependencies as follows:
 - Open the Packet Manager Console via menu Tools > Nuget Packet Manager.
