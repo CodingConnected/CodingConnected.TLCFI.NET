@@ -3,9 +3,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using CodingConnected.TLCFI.NET.Client;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
 
-namespace CodingConnected.TLCFI.NET.TestClient
+namespace CodingConnected.TLCFI.NET.Core.Core.TestClient
 {
     /// <summary>
     /// An example of a class that consumes the events and methods of TLCFIClient.

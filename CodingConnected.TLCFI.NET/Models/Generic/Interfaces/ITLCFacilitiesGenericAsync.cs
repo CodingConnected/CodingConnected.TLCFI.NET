@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace CodingConnected.TLCFI.NET.Models.Generic
+namespace CodingConnected.TLCFI.NET.Core.Models.Generic
 {
     public interface ITLCFacilitiesGenericAsync : ITLCFIPeerAsync
     {

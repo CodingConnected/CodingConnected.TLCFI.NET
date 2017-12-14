@@ -1,4 +1,4 @@
-﻿namespace CodingConnected.TLCFI.NET.Tools
+﻿namespace CodingConnected.TLCFI.NET.Core.Tools
 {
     public interface ITicksGenerator
     {

@@ -4,7 +4,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Client.Data;
-using CodingConnected.TLCFI.NET.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
 using JetBrains.Annotations;
 using NLog;
 

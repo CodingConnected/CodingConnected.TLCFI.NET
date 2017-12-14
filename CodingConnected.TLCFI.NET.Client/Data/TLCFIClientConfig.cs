@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Xml.Serialization;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
 using JetBrains.Annotations;
 
 namespace CodingConnected.TLCFI.NET.Client.Data

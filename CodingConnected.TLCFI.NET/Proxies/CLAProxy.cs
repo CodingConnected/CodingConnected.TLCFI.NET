@@ -3,12 +3,14 @@ using NLog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CodingConnected.TLCFI.NET.Data;
-using CodingConnected.TLCFI.NET.Generic;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Generic;
 
-namespace CodingConnected.TLCFI.NET.Proxies
+namespace CodingConnected.TLCFI.NET.Core.Proxies
 {
     public sealed class CLAProxy : ITLCFIClientAsync, IDisposable
     {
@@ -19,8 +21,7 @@ namespace CodingConnected.TLCFI.NET.Proxies
         private static readonly JsonRpcClient _rpcClient;
 
         private readonly int _maxRpcDuration = TLCFIDataProvider.Default.Settings.MaxRpcDuration;
-        private readonly int _maxRpcDurationSession = TLCFIDataProvider.Default.Settings.MaxRpcDurationSession;
-        private readonly int _aliveReceiveTimeOut = TLCFIDataProvider.Default.Settings.AliveReceiveTimeOut;
+	    private readonly int _aliveReceiveTimeOut = TLCFIDataProvider.Default.Settings.AliveReceiveTimeOut;
 
         #endregion // Fields
 
@@ -32,14 +33,19 @@ namespace CodingConnected.TLCFI.NET.Proxies
 
         #region ITLCFIClient
 
-#warning Compare TLCProxy: need more error handling code; also: use all three times ints from above
         public async Task UpdateStateAsync(ObjectStateUpdateGroup objectstateupdategroup, CancellationToken token)
         {
             try
             {
                 await _rpcClient.InvokeAsync("UpdateState", objectstateupdategroup, _maxRpcDuration, CancellationToken.None);
-            }
-            catch (Exception e)
+			}
+			catch (JsonRpcException e)
+			{
+				_logger.Error("Calling method UpdateStateAsync failed: {0}. See trace for exception details.", e.RpcMessage);
+				_logger.Trace(e, "Calling method UpdateStateAsync failed:");
+				throw;
+			}
+			catch (Exception e)
             {
                 _logger.Error("Calling method ReadMeta failed; see trace for details");
                 _logger.Trace(e, "Calling method ReadMeta failed with exception: ");
@@ -51,8 +57,14 @@ namespace CodingConnected.TLCFI.NET.Proxies
             try
             {
                 await _rpcClient.InvokeAsync("NotifyEvent", objectevent, _maxRpcDuration, CancellationToken.None);
-            }
-            catch (Exception e)
+			}
+			catch (JsonRpcException e)
+			{
+				_logger.Error("Calling method NotifyEventAsync failed: {0}. See trace for exception details.", e.RpcMessage);
+				_logger.Trace(e, "Calling method NotifyEventAsync failed:");
+				throw;
+			}
+			catch (Exception e)
             {
                 _logger.Error("Calling method NotifyEvent failed; see trace for details");
                 _logger.Trace(e, "Calling method NotifyEvent failed with exception: ");
@@ -63,9 +75,15 @@ namespace CodingConnected.TLCFI.NET.Proxies
         {
             try
             {
-                return await _rpcClient.InvokeAsync<AliveObject>("Alive", alive, _maxRpcDuration, CancellationToken.None);
-            }
-            catch (Exception e)
+                return await _rpcClient.InvokeAsync<AliveObject>("Alive", alive, _aliveReceiveTimeOut, CancellationToken.None);
+			}
+			catch (JsonRpcException e)
+			{
+				_logger.Error("Calling method AliveAsync failed: {0}. See trace for exception details.", e.RpcMessage);
+				_logger.Trace(e, "Calling method AliveAsync failed:");
+				throw;
+			}
+			catch (Exception e)
             {
                 _logger.Error("Calling method Alive failed; see trace for details");
                 _logger.Trace(e, "Calling method Alive failed with exception: ");
@@ -78,8 +96,14 @@ namespace CodingConnected.TLCFI.NET.Proxies
             try
             {
                 return await _rpcClient.InvokeAsync<ObjectMeta>("ReadMeta", objectReference, _maxRpcDuration, CancellationToken.None);
-            }
-            catch (Exception e)
+			}
+			catch (JsonRpcException e)
+			{
+				_logger.Error("Calling method ReadMeta failed: {0}. See trace for exception details.", e.RpcMessage);
+				_logger.Trace(e, "Calling method ReadMeta failed:");
+				throw;
+			}
+			catch (Exception e)
             {
                 _logger.Error("Calling method ReadMeta failed; see trace for details");
                 _logger.Trace(e, "Calling method ReadMeta failed with exception: ");
@@ -108,14 +132,11 @@ namespace CodingConnected.TLCFI.NET.Proxies
 
         #region Constructor
 
-        public CLAProxy(TwoWayTcpClient client, int maxRpcDuration, int maxRpcDurationSession)
+        public CLAProxy(TwoWayTcpClient client)
         {
             Client = client;
             _rpcClient.TcpClient = Client;
             Client.DataReceived += _rpcClient.HandleDataReceived;
-
-            _maxRpcDuration = maxRpcDuration;
-            _maxRpcDurationSession = maxRpcDurationSession;
         }
 
         static CLAProxy()

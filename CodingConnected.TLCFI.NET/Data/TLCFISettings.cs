@@ -1,7 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace CodingConnected.TLCFI.NET.Data
+namespace CodingConnected.TLCFI.NET.Core.Data
 {
     [Serializable]
     public class TLCFISettings
@@ -10,6 +10,7 @@ namespace CodingConnected.TLCFI.NET.Data
 
         [UsedImplicitly]
         public int AliveSendTimeOut { get; set; }
+
         [UsedImplicitly]
         public int AliveReceiveTimeOut { get; set; }
 

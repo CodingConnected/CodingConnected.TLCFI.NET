@@ -4,10 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.JsonRPC;
 using CodingConnected.TLCFI.NET.Client.Data;
-using CodingConnected.TLCFI.NET.Generic;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Proxies;
+using CodingConnected.TLCFI.NET.Core.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Proxies;
 using NLog;
 
 namespace CodingConnected.TLCFI.NET.Client.Session

@@ -1,6 +1,6 @@
-﻿using CodingConnected.TLCFI.NET.Models.Generic;
+﻿using CodingConnected.TLCFI.NET.Core.Models.Generic;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC.Base
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC.Base
 {
     public abstract class TLCSessionBase : TLCObjectBase
     {

@@ -1,8 +1,8 @@
 ﻿using System.Text;
-using CodingConnected.TLCFI.NET.Tools;
+using CodingConnected.TLCFI.NET.Core.Tools;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public class SpecialVehicleEvent
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public class DetectorEvent
     {

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC.Base
 {
     public abstract class TLCIntersectionObjectBase : TLCObjectBase
     {

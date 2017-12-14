@@ -1,8 +1,8 @@
 ﻿using System;
-using CodingConnected.TLCFI.NET.Tools;
+using CodingConnected.TLCFI.NET.Core.Tools;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.Generic
+namespace CodingConnected.TLCFI.NET.Core.Models.Generic
 {
     public class RegistrationRequest
     {

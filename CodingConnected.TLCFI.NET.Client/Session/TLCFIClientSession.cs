@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using System.Timers;
 using CodingConnected.JsonRPC;
 using CodingConnected.TLCFI.NET.Client.Data;
-using CodingConnected.TLCFI.NET.Data;
-using CodingConnected.TLCFI.NET.Generic;
-using CodingConnected.TLCFI.NET.Helpers;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Proxies;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Generic;
+using CodingConnected.TLCFI.NET.Core.Helpers;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Proxies;
+using CodingConnected.TLCFI.NET.Core.Tools;
 using JetBrains.Annotations;
 using NLog;
 using Timer = System.Timers.Timer;
@@ -170,7 +172,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                 if(!Connected || !State.SystemsAlive)
                     return;
 
-                var ao = new AliveObject {Ticks = TLCFIClient.CurrentTicks, Time = TLCFIClient.CurrentTime};
+                var ao = new AliveObject {Ticks = TLCFIClient.CurrentTicks, Time = TimestampGenerator.GetTimestamp() };
                 var reply = await TLCProxy.AliveAsync(ao, _sessionCancellationToken);
                 if (reply != null && reply.Ticks == ao.Ticks && reply.Time == ao.Time)
                 {

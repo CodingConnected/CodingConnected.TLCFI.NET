@@ -66,9 +66,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.csproj">
+    <ProjectReference Include="..\CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.Core.csproj">
       <Project>{e2cdcf40-4d43-47e1-8dea-5db033de7907}</Project>
-      <Name>CodingConnected.TLCFI.NET</Name>
+      <Name>CodingConnected.TLCFI.NET.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Dynamic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public class SpecialVehicleEventGenerator : TLCObjectBase
     {

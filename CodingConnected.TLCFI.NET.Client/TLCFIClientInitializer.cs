@@ -10,13 +10,13 @@ using System.Linq;
 using CodingConnected.TLCFI.NET.Client.Data;
 using CodingConnected.TLCFI.NET.Client.Helpers;
 using CodingConnected.TLCFI.NET.Client.Session;
-using CodingConnected.TLCFI.NET.Data;
-using CodingConnected.TLCFI.NET.Exceptions;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Models.TLC.Base;
-using CodingConnected.TLCFI.NET.Tools;
-using CodingConnected.TLCFI.NET.Extensions;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Exceptions;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Tools;
+using CodingConnected.TLCFI.NET.Core.Extensions;
 
 namespace CodingConnected.TLCFI.NET.Client
 {
@@ -106,9 +106,8 @@ namespace CodingConnected.TLCFI.NET.Client
                 }
                 var reply = await session.TLCProxy.RegisterAsync(rr, token);
 
-                if (reply == null) throw new RegistrationFailedException("Received null as a reply.");
+	            _facilitiesRef = reply?.Facilities ?? throw new RegistrationFailedException("Received null as a reply to RegisterAsync().");
 
-                _facilitiesRef = reply.Facilities;
                 session.State.Registered = true;
                 _logger.Info("Registered succesful");
                 return reply.Sessionid;
@@ -169,7 +168,7 @@ namespace CodingConnected.TLCFI.NET.Client
                 }
                 if (stateManager.Session.SessionType != _config.ApplicationType)
                 {
-                    throw new InvalidTLCObjectTypeException($"Type of Session (ApplicationType) incorrect. Expected ApplicationType.Control, got {stateManager.Session.SessionType}");
+                    throw new InvalidTLCObjectTypeException($"Type of Session (ApplicationType) incorrect. Expected {_config.ApplicationType.ToString()}, got {stateManager.Session.SessionType.ToString()}");
                 }
                 var data = await session.TLCProxy.SubscribeAsync(sref, token);
                 token.ThrowIfCancellationRequested();
@@ -222,8 +221,7 @@ namespace CodingConnected.TLCFI.NET.Client
                         {
                             _logger.Error("Intersection with id {0} not found in TLCFacilities META data",
                                 _config.RemoteIntersectionId);
-                            throw new TLCObjectNotFoundException(
-                                $"Intersection with id {_config.RemoteIntersectionId} not found in TLCFacilities META data");
+                            throw new TLCObjectNotFoundException(_config.RemoteIntersectionId, TLCObjectType.Intersection);
                         }
                     }
                     else

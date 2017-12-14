@@ -1,9 +1,12 @@
 ﻿using CodingConnected.JsonRPC;
-using CodingConnected.TLCFI.NET.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
 using NLog;
 
-namespace CodingConnected.TLCFI.NET.Extensions
+namespace CodingConnected.TLCFI.NET.Core.Extensions
 {
+	/// <summary>
+	/// Extension for NLog.Logger, allowing specific logging for the JsonRpcException class
+	/// </summary>
     public static class LoggerExtensions
     {
         public static void LogRpcException(this Logger logger, JsonRpcException e)

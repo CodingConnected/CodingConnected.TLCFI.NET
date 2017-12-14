@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CodingConnected.TLCFI.NET.Exceptions
+namespace CodingConnected.TLCFI.NET.Core.Exceptions
 {
     public class RegistrationFailedException : Exception
     {

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Dynamic;
-using CodingConnected.TLCFI.NET.Tools;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Tools;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
 using Newtonsoft.Json;
 using NLog;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public class Input : TLCIntersectionObjectBase
     {
@@ -37,7 +39,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
         private InputFaultState? _faultState;
         private SwicoState? _swico;
 
-        [ObjectID]
+        [ObjectId]
         [JsonProperty("id")]
         public override string Id
         {

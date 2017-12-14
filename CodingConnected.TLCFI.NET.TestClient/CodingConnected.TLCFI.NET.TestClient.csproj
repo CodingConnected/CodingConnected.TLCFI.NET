@@ -67,9 +67,9 @@
       <Project>{c908f07c-0f94-442e-abf2-ed94a5689b59}</Project>
       <Name>CodingConnected.TLCFI.NET.Client</Name>
     </ProjectReference>
-    <ProjectReference Include="..\CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.csproj">
+    <ProjectReference Include="..\CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.Core.csproj">
       <Project>{e2cdcf40-4d43-47e1-8dea-5db033de7907}</Project>
-      <Name>CodingConnected.TLCFI.NET</Name>
+      <Name>CodingConnected.TLCFI.NET.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

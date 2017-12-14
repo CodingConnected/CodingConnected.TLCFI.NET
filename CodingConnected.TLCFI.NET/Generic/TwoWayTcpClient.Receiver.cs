@@ -3,9 +3,10 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using CodingConnected.TLCFI.NET.Data;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Data;
 
-namespace CodingConnected.TLCFI.NET.Generic
+namespace CodingConnected.TLCFI.NET.Core.Generic
 {
     public sealed partial class TwoWayTcpClient
     {

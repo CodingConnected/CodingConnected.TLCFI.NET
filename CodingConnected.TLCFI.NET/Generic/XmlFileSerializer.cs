@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Xml.Serialization;
 
-namespace CodingConnected.TLCFI.NET.Generic
+namespace CodingConnected.TLCFI.NET.Core.Generic
 {
     public static class XmlFileSerializer
     {

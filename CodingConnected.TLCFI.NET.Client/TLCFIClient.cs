@@ -6,11 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Client.Data;
 using CodingConnected.TLCFI.NET.Client.Session;
-using CodingConnected.TLCFI.NET.EventsArgs;
-using CodingConnected.TLCFI.NET.Exceptions;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Tools;
+using CodingConnected.TLCFI.NET.Core.Exceptions;
+using CodingConnected.TLCFI.NET.Core.Helpers;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Tools;
 using JetBrains.Annotations;
 using NLog;
 using DateTime = System.DateTime;
@@ -27,8 +28,6 @@ namespace CodingConnected.TLCFI.NET.Client
         #region Fields
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-        private static readonly DateTime _timeStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private readonly TLCFIClientSessionManager _sessionManager;
         private readonly TLCFIClientInitializer _clientInitializer;
@@ -75,7 +74,6 @@ namespace CodingConnected.TLCFI.NET.Client
         public TLCFIClientStateManager StateManager { get; internal set; }
 
         public static uint CurrentTicks => TicksGenerator.Default.GetCurrentTicks();
-        public static ulong CurrentTime => (uint)DateTime.UtcNow.Subtract(_timeStart).TotalMilliseconds;
 
         public bool Connected => _session?.Connected ?? false;
         public bool Configured => _session?.State?.Configured ?? false;
@@ -471,7 +469,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Error("SetSignalGourpReqState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.SignalGroup);
             }
         }
 
@@ -531,7 +529,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Error("SetOutputReqState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.Output);
             }
         }
 
@@ -549,7 +547,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Warn("GetSignalGroupReqState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.SignalGroup);
             }
         }
 
@@ -567,7 +565,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Warn("GetOutputState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.Output);
             }
         }
         /// <summary>
@@ -584,7 +582,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Warn("GetDetectorState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.Detector);
             }
         }
         
@@ -602,7 +600,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Warn("GetIntputState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.Input);
             }
         }
 
@@ -616,7 +614,7 @@ namespace CodingConnected.TLCFI.NET.Client
             else
             {
                 _logger.Warn("GetDetectorState: id {0} not found in StateManager instance.", id);
-                throw new TLCObjectNotFoundException($"Id {id} not found in StateManager instance.");
+                throw new TLCObjectNotFoundException(id, TLCObjectType.Intersection);
             }
         }
 

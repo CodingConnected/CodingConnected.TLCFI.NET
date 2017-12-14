@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Xml.Serialization;
-using CodingConnected.TLCFI.NET.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
 using NLog;
 
-namespace CodingConnected.TLCFI.NET.Data
+namespace CodingConnected.TLCFI.NET.Core.Data
 {
     public class TLCFIDataProvider : ITLCFIDataProvider
     {

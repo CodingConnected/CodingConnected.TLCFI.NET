@@ -1,4 +1,4 @@
-﻿namespace CodingConnected.TLCFI.NET.Models.TLC
+﻿namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public enum PunctualityClass
     {

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Client;
 using CodingConnected.TLCFI.NET.Client.Data;
 
-namespace CodingConnected.TLCFI.NET.TestClient
+namespace CodingConnected.TLCFI.NET.Core.Core.TestClient
 {
     public static class Program
     {

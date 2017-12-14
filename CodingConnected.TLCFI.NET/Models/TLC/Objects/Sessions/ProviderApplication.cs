@@ -1,9 +1,10 @@
 ﻿using System;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public class ProviderApplication : TLCSessionBase
     {
@@ -28,7 +29,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
 
         // META
 
-        [ObjectID]
+        [ObjectId]
         [JsonProperty("sessionid")]
         public override string Id // TLC-FI type: ObjectID
         {

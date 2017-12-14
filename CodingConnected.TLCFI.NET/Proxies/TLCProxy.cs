@@ -3,12 +3,14 @@ using NLog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CodingConnected.TLCFI.NET.Data;
-using CodingConnected.TLCFI.NET.Generic;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Data;
+using CodingConnected.TLCFI.NET.Core.Generic;
 
-namespace CodingConnected.TLCFI.NET.Proxies
+namespace CodingConnected.TLCFI.NET.Core.Proxies
 {
     public sealed class TLCProxy : ITLCFIFacilitiesAsync, IDisposable
     {

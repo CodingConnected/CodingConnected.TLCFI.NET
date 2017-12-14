@@ -5,11 +5,11 @@ using System.Data;
 using System.Linq;
 using JetBrains.Annotations;
 using CodingConnected.JsonRPC;
-using CodingConnected.TLCFI.NET.Exceptions;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Models.TLC.Base;
-using CodingConnected.TLCFI.NET.Tools;
+using CodingConnected.TLCFI.NET.Core.Exceptions;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Tools;
 using NLog;
 
 namespace CodingConnected.TLCFI.NET.Client.Data

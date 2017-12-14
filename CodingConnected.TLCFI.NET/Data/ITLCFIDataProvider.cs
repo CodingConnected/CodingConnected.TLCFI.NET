@@ -1,6 +1,6 @@
-﻿using CodingConnected.TLCFI.NET.Models.Generic;
+﻿using CodingConnected.TLCFI.NET.Core.Models.Generic;
 
-namespace CodingConnected.TLCFI.NET.Data
+namespace CodingConnected.TLCFI.NET.Core.Data
 {
     public interface ITLCFIDataProvider
     {

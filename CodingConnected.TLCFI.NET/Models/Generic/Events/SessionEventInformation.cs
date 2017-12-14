@@ -1,8 +1,9 @@
-﻿using CodingConnected.TLCFI.NET.Models.TLC;
-using CodingConnected.TLCFI.NET.Tools;
+﻿using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Tools;
+using CodingConnected.TLCFI.NET.Core.Tools;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.Generic
+namespace CodingConnected.TLCFI.NET.Core.Models.Generic
 {
     public class SessionEventInformation
     {

@@ -1,7 +1,8 @@
-﻿using CodingConnected.TLCFI.NET.Models.Converters;
+﻿using CodingConnected.TLCFI.NET.Core.Models.Converters;
+using CodingConnected.TLCFI.NET.Core.Models.Converters;
 using Newtonsoft.Json;
 
-namespace CodingConnected.TLCFI.NET.Models.Generic
+namespace CodingConnected.TLCFI.NET.Core.Models.Generic
 {
     [JsonConverter(typeof(TlcObjectJsonConverter))]
     public class ObjectMeta

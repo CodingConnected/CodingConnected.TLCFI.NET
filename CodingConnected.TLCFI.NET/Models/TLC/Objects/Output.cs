@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Dynamic;
-using CodingConnected.TLCFI.NET.Tools;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
+using CodingConnected.TLCFI.NET.Core.Tools;
+using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NLog;
 
-namespace CodingConnected.TLCFI.NET.Models.TLC
+namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
     public class Output : TLCIntersectionObjectBase
     {
@@ -37,7 +39,7 @@ namespace CodingConnected.TLCFI.NET.Models.TLC
         // META
 
         private string _id;
-        [ObjectID]
+        [ObjectId]
         [JsonProperty("id")]
         public override string Id
         {

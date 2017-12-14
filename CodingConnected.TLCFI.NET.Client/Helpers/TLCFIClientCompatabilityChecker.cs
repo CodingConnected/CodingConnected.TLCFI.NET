@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using CodingConnected.TLCFI.NET.Client.Data;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
 using NLog;
 
 namespace CodingConnected.TLCFI.NET.Client.Helpers

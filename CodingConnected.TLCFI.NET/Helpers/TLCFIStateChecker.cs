@@ -1,10 +1,21 @@
 ﻿using System;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
 
-namespace CodingConnected.TLCFI.NET.Helpers
+namespace CodingConnected.TLCFI.NET.Core.Helpers
 {
+	/// <summary>
+	/// This class is meant for checking if control state changes are valid
+	/// </summary>
     public static class TLCFIStateChecker
     {
+		/// <summary>
+		/// Check wether a given change in the control state of a TLC is valid.
+		/// The result of this method can be used to report a faulty state change,
+		/// and/or take appropriate action.
+		/// </summary>
+		/// <param name="oldstate">The prievous control state</param>
+		/// <param name="newstate">The new control state</param>
+		/// <returns>True if a state change is OK, false if not</returns>
         public static bool IsControlStateChangeOk(ControlState oldstate, ControlState newstate)
         {
             if (newstate == ControlState.Error)

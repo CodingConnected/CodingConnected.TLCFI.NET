@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
-using CodingConnected.TLCFI.NET.Models.Generic;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.Generic;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace CodingConnected.TLCFI.NET.Models.Converters
+namespace CodingConnected.TLCFI.NET.Core.Models.Converters
 {
     public class TlcObjectJsonConverter : JsonConverter
     {
@@ -23,49 +23,48 @@ namespace CodingConnected.TLCFI.NET.Models.Converters
                 case JsonToken.StartObject:
                     existingValue = existingValue ?? serializer.ContractResolver.ResolveContract(objectType).DefaultCreator();
                     serializer.Populate(reader, existingValue);
-                    if(existingValue is ObjectMeta om)
+                    switch (existingValue)
                     {
-                        var nom = new ObjectMeta
-                        {
-                            Objects = om.Objects,
-                            Meta = om.Meta.Select(mt => ((JObject) mt).ToObject(GetOJtype(om.Objects.Type))).ToArray(),
-                            Ticks = om.Ticks
-                        };
-                        return nom;
+	                    case ObjectMeta om:
+		                    var nom = new ObjectMeta
+		                    {
+			                    Objects = om.Objects,
+			                    Meta = om.Meta.Select(mt => ((JObject) mt).ToObject(GetOJtype(om.Objects.Type))).ToArray(),
+			                    Ticks = om.Ticks
+		                    };
+		                    return nom;
+	                    case ObjectStateUpdate osu:
+		                    var nosu = new ObjectStateUpdate
+		                    {
+			                    Objects = osu.Objects,
+			                    States = osu.States.Select(mt => ((JObject) mt).ToObject(GetOJtype(osu.Objects.Type)))
+				                    .ToArray()
+		                    };
+		                    return nosu;
+	                    case ObjectData oda:
+	                    {
+		                    var noda = new ObjectData
+		                    {
+			                    Objects = oda.Objects,
+			                    Data = oda.Data.Select(mt => ((JObject)mt).ToObject(GetOJtype(oda.Objects.Type)))
+				                    .ToArray(),
+			                    Ticks = oda.Ticks
+		                    };
+		                    return noda;
+	                    }
+	                    case ObjectEvent oev:
+	                    {
+		                    var noda = new ObjectEvent
+		                    {
+			                    Objects = oev.Objects,
+			                    Events = oev.Events.Select(mt => ((JObject)mt).ToObject(GetOJtype(oev.Objects.Type)))
+				                    .ToArray(),
+			                    Ticks = oev.Ticks
+		                    };
+		                    return noda;
+	                    }
                     }
-                    if (existingValue is ObjectStateUpdate osu)
-                    {
-                        var nosu = new ObjectStateUpdate
-                        {
-                            Objects = osu.Objects,
-                            States = osu.States.Select(mt => ((JObject) mt).ToObject(GetOJtype(osu.Objects.Type)))
-                                .ToArray()
-                        };
-                        return nosu;
-                    }
-                    if (existingValue is ObjectData oda)
-                    {
-                        var noda = new ObjectData
-                        {
-                            Objects = oda.Objects,
-                            Data = oda.Data.Select(mt => ((JObject)mt).ToObject(GetOJtype(oda.Objects.Type)))
-                                .ToArray(),
-                            Ticks = oda.Ticks
-                        };
-                        return noda;
-                    }
-                    if (existingValue is ObjectEvent oev)
-                    {
-                        var noda = new ObjectEvent
-                        {
-                            Objects = oev.Objects,
-                            Events = oev.Events.Select(mt => ((JObject)mt).ToObject(GetOJtype(oev.Objects.Type)))
-                                .ToArray(),
-                            Ticks = oev.Ticks
-                        };
-                        return noda;
-                    }
-                    return null;
+	                return null;
                 case JsonToken.Null:
                     return null;
                 default:
@@ -105,7 +104,7 @@ namespace CodingConnected.TLCFI.NET.Models.Converters
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
     }
 }

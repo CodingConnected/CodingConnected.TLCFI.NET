@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace CodingConnected.TLCFI.NET.Tools
+namespace CodingConnected.TLCFI.NET.Core.Tools
 {
+	/// <summary>
+	/// ValueChecked contains methods to validate the format of a
+	/// variety of data as described in the TLC-FI specifications
+	/// </summary>
     public static class ValueChecker
     {
         private static readonly Regex RejectedRegex = new Regex(@"[^_\-a-zA-Z0-9]");
@@ -12,14 +16,15 @@ namespace CodingConnected.TLCFI.NET.Tools
         public static void CheckValidObjectId(string id)
         {
             if (id != null && RejectedRegex.IsMatch(id))
-                throw new NotImplementedException("ObjectID contains unallowed characters.");
+                throw new FormatException($"ObjectID {id} contains unallowed characters.");
         }
 
         public static void CheckValidObjectId(IEnumerable<string> ids)
         {
-            if (ids.Any(id => id != null && RejectedRegex.IsMatch(id)))
+	        var enumerable = ids as string[] ?? ids.ToArray();
+	        if (enumerable.Any(id => id != null && RejectedRegex.IsMatch(id)))
             {
-                throw new NotImplementedException("ObjectID contains unallowed characters.");
+                throw new FormatException($"ObjectID {enumerable.First(id => id != null && RejectedRegex.IsMatch(id))} contains unallowed characters.");
             }
         }
 
@@ -27,7 +32,7 @@ namespace CodingConnected.TLCFI.NET.Tools
         {
             if (name.Length > 32 || name.Select(c => (int) c).Any(ic => ic < 32 || ic > 126 || ic == 34 || ic == 44))
             {
-                throw new NotImplementedException("CompanyName contains unallowed characters.");
+                throw new FormatException($"CompanyName {name} contains unallowed characters.");
             }
         }
 
@@ -35,7 +40,7 @@ namespace CodingConnected.TLCFI.NET.Tools
         {
             if (ver.Length > 32 || ver.Select(c => (int)c).Any(ic => ic < 32 || ic > 126 || ic == 34 || ic == 44))
             {
-                throw new NotImplementedException("CompanyName contains unallowed characters.");
+                throw new FormatException($"Version string {ver} contains unallowed characters.");
             }
         }
 
@@ -43,7 +48,7 @@ namespace CodingConnected.TLCFI.NET.Tools
         {
             if (val.Length > 32 || val.Select(c => (int)c).Any(ic => ic < 32 || ic > 126 || ic == 34 || ic == 44))
             {
-                throw new NotImplementedException("CompanyName contains unallowed characters.");
+                throw new FormatException($"Application string {val} contains unallowed characters.");
             }
         }
 

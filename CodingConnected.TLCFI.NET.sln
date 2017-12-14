@@ -8,7 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{E40078
 		paket.dependencies = paket.dependencies
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingConnected.TLCFI.NET", "CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.csproj", "{E2CDCF40-4D43-47E1-8DEA-5DB033DE7907}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingConnected.TLCFI.NET.Core", "CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.Core.csproj", "{E2CDCF40-4D43-47E1-8DEA-5DB033DE7907}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodingConnected.TLCFI.NET.Client", "CodingConnected.TLCFI.NET.Client\CodingConnected.TLCFI.NET.Client.csproj", "{C908F07C-0F94-442E-ABF2-ED94A5689B59}"
 EndProject

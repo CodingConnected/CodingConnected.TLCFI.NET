@@ -7,8 +7,8 @@
     <ProjectGuid>{E2CDCF40-4D43-47E1-8DEA-5DB033DE7907}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CodingConnected.TLCFI.NET</RootNamespace>
-    <AssemblyName>CodingConnected.TLCFI.NET</AssemblyName>
+    <RootNamespace>CodingConnected.TLCFI.NET.Core</RootNamespace>
+    <AssemblyName>CodingConnected.TLCFI.NET.Core</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -50,10 +50,10 @@
     <Content Include="NLog.xsd">
       <Paket>True</Paket>
     </Content>
-    <Compile Include="Attributes\ObjectIDAttribute.cs" />
+    <Compile Include="Class1.cs" />
+    <Compile Include="Models\ObjectIDAttribute.cs" />
     <Compile Include="Data\ITLCFIDataProvider.cs" />
-    <Compile Include="EventsArgs\ControlStateChangedEventArgs.cs" />
-    <Compile Include="Generic\MicroTimer.cs" />
+    <Compile Include="Helpers\ControlStateChangedEventArgs.cs" />
     <Compile Include="Generic\XmlFileSerializer.cs" />
     <Compile Include="Helpers\Sha256Hasher.cs" />
     <Compile Include="Data\TLCFIDataProvider.cs" />
@@ -80,10 +80,10 @@
     <Compile Include="Models\Generic\Enumerations\ApplicationType.cs" />
     <Compile Include="Models\Generic\Enumerations\ProtocolErrorCode.cs" />
     <Compile Include="Models\Generic\Enumerations\SessionEventCode.cs" />
-    <Compile Include="Models\Generic\ITLCFacilitiesGenericAsync.cs" />
-    <Compile Include="Models\Generic\ITLCFacilitiesGeneric.cs" />
-    <Compile Include="Models\Generic\ITLCFIPeerAsync.cs" />
-    <Compile Include="Models\Generic\ITLCFIPeer.cs" />
+    <Compile Include="Models\Generic\Interfaces\ITLCFacilitiesGenericAsync.cs" />
+    <Compile Include="Models\Generic\Interfaces\ITLCFacilitiesGeneric.cs" />
+    <Compile Include="Models\Generic\Interfaces\ITLCFIPeerAsync.cs" />
+    <Compile Include="Models\Generic\Interfaces\ITLCFIPeer.cs" />
     <Compile Include="Models\Generic\Location.cs" />
     <Compile Include="Models\Generic\ObjectData.cs" />
     <Compile Include="Models\Generic\ObjectEvent.cs" />
@@ -94,8 +94,8 @@
     <Compile Include="Models\Generic\ProtocolVersion.cs" />
     <Compile Include="Models\Generic\RegistrationReply.cs" />
     <Compile Include="Models\Generic\RegistrationRequest.cs" />
-    <Compile Include="Models\Events\SessionEvent.cs" />
-    <Compile Include="Models\Events\SessionEventInformation.cs" />
+    <Compile Include="Models\Generic\Events\SessionEvent.cs" />
+    <Compile Include="Models\Generic\Events\SessionEventInformation.cs" />
     <Compile Include="Models\TLC\Base\TLCIntersectionObjectBase.cs" />
     <Compile Include="Models\TLC\Base\TLCObjectBase.cs" />
     <Compile Include="Models\TLC\Base\TLCSessionBase.cs" />
@@ -121,10 +121,10 @@
     <Compile Include="Models\TLC\Enumerations\VehicleType.cs" />
     <Compile Include="Models\TLC\Events\DetectorEvent.cs" />
     <Compile Include="Models\TLC\Events\SpecialVehicleEvent.cs" />
-    <Compile Include="Models\TLC\ITLCFIClientAsync.cs" />
-    <Compile Include="Models\TLC\ITLCFIClient.cs" />
-    <Compile Include="Models\TLC\ITLCFIFacilitiesAsync.cs" />
-    <Compile Include="Models\TLC\ITLCFIFacilities.cs" />
+    <Compile Include="Models\TLC\Interfaces\ITLCFIClientAsync.cs" />
+    <Compile Include="Models\TLC\Interfaces\ITLCFIClient.cs" />
+    <Compile Include="Models\TLC\Interfaces\ITLCFIFacilitiesAsync.cs" />
+    <Compile Include="Models\TLC\Interfaces\ITLCFIFacilities.cs" />
     <Compile Include="Models\TLC\Objects\Detector.cs" />
     <Compile Include="Models\TLC\Objects\Input.cs" />
     <Compile Include="Models\TLC\Objects\Intersection.cs" />

@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.JsonRPC;
 
-namespace CodingConnected.TLCFI.NET.Generic
+namespace CodingConnected.TLCFI.NET.Core.Generic
 {
     public sealed partial class TwoWayTcpClient : IDisposable, ITcpClient
     {

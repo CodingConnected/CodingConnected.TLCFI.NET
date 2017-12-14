@@ -1,7 +1,8 @@
 ﻿using System;
-using CodingConnected.TLCFI.NET.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
+using CodingConnected.TLCFI.NET.Core.Models.TLC;
 
-namespace CodingConnected.TLCFI.NET.EventsArgs
+namespace CodingConnected.TLCFI.NET.Core.Helpers
 {
     public class ControlStateChangedEventArgs : EventArgs
     {
