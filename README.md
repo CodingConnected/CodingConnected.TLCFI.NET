@@ -57,18 +57,18 @@ As a pratical example, here is typical use case, assuming the CLA will take cont
 
 The constructor of the `TLCFIClient` class takes two arguments:
 - An instance of `TLCFIClientConfig`: this class contains all relevant configuration data. The client will use this data to initiate the connection with the TLC. A concise list of members of this class:
- - `FiVersion` A static instance of ProtocolVersion, describing which version of the TLC-FI the library implements. Currently: 1.1.0.
- - `RemoteAddress`, `RemotePort`, `Username`, `Password` Remote address, port, and username and password, used to connect and login.
- - `ApplicationType` Application type (consumer, provider or control)
- - `RemoteIntersectionId` The remote id of the intersection that will be monitored and/or controlled
- - `StartCapability`, `EndCapability` Start- and capability of the host application
- - `IveraUri` A URI describing where the CLA IVERA client can be accessed
- - `UseIdsFromTLC` A boolean which, if true, causes the client to check ids with TLC id's, instead of intersection id's.
- - `RegisterDelayAfterConnecting` Time, in miliseconds, to wait before registering after a TCP connection has been established.
- - `AutoReconnected` A boolean which, if true, causes the client to automatically reconnect upon connection loss.
- - `SignalGroupIds` A list of strings, holding all the signal group id's that are expected to be found in the TLC configuration.
- - `DetectorIds`, `InputIds` and `OutputIds` Same as previous bullet, for other objects. Note that for signal groups, the list of ids must match exactly. For the other objects, an id present in the TLC that is not present in the local list will cause a warning; an id present locally but not in the TLC will cause an error.
-- An instance of a `CancellationToken`. If `Cancel()` is called on the source of this token, all tasks running within the client will abruptly ended, ending a running session non-gracefully.
+-- `FiVersion` A static instance of ProtocolVersion, describing which version of the TLC-FI the library implements. Currently: 1.1.0.
+-- `RemoteAddress`, `RemotePort`, `Username`, `Password` Remote address, port, and username and password, used to connect and login.
+-- `ApplicationType` Application type (consumer, provider or control)
+-- `RemoteIntersectionId` The remote id of the intersection that will be monitored and/or controlled
+-- `StartCapability`, `EndCapability` Start- and capability of the host application
+-- `IveraUri` A URI describing where the CLA IVERA client can be accessed
+-- `UseIdsFromTLC` A boolean which, if true, causes the client to check ids with TLC id's, instead of intersection id's.
+-- `RegisterDelayAfterConnecting` Time, in miliseconds, to wait before registering after a TCP connection has been established.
+-- `AutoReconnected` A boolean which, if true, causes the client to automatically reconnect upon connection loss.
+-- `SignalGroupIds` A list of strings, holding all the signal group id's that are expected to be found in the TLC configuration.
+-- `DetectorIds`, `InputIds` and `OutputIds` Same as previous bullet, for other objects. Note that for signal groups, the list of ids must match exactly. For the other objects, an id present in the TLC that is not present in the local list will cause a warning; an id present locally but not in the TLC will cause an error.
+- An instance of a `CancellationToken`. If `Cancel()` is called on the source of this token, all tasks running within the client will be abruptly ended, ending a running session non-gracefully.
 
 ### Events
 
