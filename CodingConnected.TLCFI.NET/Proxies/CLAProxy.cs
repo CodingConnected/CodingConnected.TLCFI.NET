@@ -7,8 +7,6 @@ using CodingConnected.TLCFI.NET.Core.Data;
 using CodingConnected.TLCFI.NET.Core.Generic;
 using CodingConnected.TLCFI.NET.Core.Models.Generic;
 using CodingConnected.TLCFI.NET.Core.Models.TLC;
-using CodingConnected.TLCFI.NET.Core.Data;
-using CodingConnected.TLCFI.NET.Core.Generic;
 
 namespace CodingConnected.TLCFI.NET.Core.Proxies
 {
@@ -41,14 +39,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
 			}
 			catch (JsonRpcException e)
 			{
-				_logger.Error("Calling method UpdateStateAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-				_logger.Trace(e, "Calling method UpdateStateAsync failed:");
+				_logger.Error(e, "Calling method UpdateStateAsync failed: {0}. Exception:", e.RpcMessage);
 				throw;
 			}
 			catch (Exception e)
             {
-                _logger.Error("Calling method ReadMeta failed; see trace for details");
-                _logger.Trace(e, "Calling method ReadMeta failed with exception: ");
+                _logger.Error(e, "Calling method UpdateStateAsync failed with exception: ");
             }
         }
 
@@ -60,14 +56,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
 			}
 			catch (JsonRpcException e)
 			{
-				_logger.Error("Calling method NotifyEventAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-				_logger.Trace(e, "Calling method NotifyEventAsync failed:");
+				_logger.Error(e, "Calling method NotifyEventAsync failed: {0}. Exception: ", e.RpcMessage);
 				throw;
 			}
 			catch (Exception e)
             {
-                _logger.Error("Calling method NotifyEvent failed; see trace for details");
-                _logger.Trace(e, "Calling method NotifyEvent failed with exception: ");
+                _logger.Error(e, "Calling method NotifyEventAsync failed with exception: ");
             }
         }
         
@@ -79,15 +73,13 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
 			}
 			catch (JsonRpcException e)
 			{
-				_logger.Error("Calling method AliveAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-				_logger.Trace(e, "Calling method AliveAsync failed:");
+				_logger.Error("Calling method AliveAsync failed: {0}. Exception: ", e.RpcMessage);
 				throw;
 			}
 			catch (Exception e)
             {
-                _logger.Error("Calling method Alive failed; see trace for details");
-                _logger.Trace(e, "Calling method Alive failed with exception: ");
-                return null;
+				_logger.Error(e, "Calling method AliveAsync failed with exception: ");
+				return null;
             }
         }
 
@@ -99,15 +91,13 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
 			}
 			catch (JsonRpcException e)
 			{
-				_logger.Error("Calling method ReadMeta failed: {0}. See trace for exception details.", e.RpcMessage);
-				_logger.Trace(e, "Calling method ReadMeta failed:");
+				_logger.Error(e, "Calling method ReadMetaAsync failed: {0}. Exception: ", e.RpcMessage);
 				throw;
 			}
 			catch (Exception e)
             {
-                _logger.Error("Calling method ReadMeta failed; see trace for details");
-                _logger.Trace(e, "Calling method ReadMeta failed with exception: ");
-                return null;
+				_logger.Error(e, "Calling method ReadMetaAsync failed with exception: ");
+				return null;
             }
         }
 

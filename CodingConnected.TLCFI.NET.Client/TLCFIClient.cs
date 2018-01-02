@@ -38,7 +38,7 @@ namespace CodingConnected.TLCFI.NET.Client
         private CancellationTokenSource _sessionCancellationTokenSource;
         private CancellationTokenSource _controlEndingCancellationTokenSource;
 
-        private int _sessionErrorCount = 0;
+        private int _sessionErrorCount;
         private bool _fatalErrorOccured;
 
         private bool _userWantsControl;

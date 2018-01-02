@@ -7,8 +7,6 @@ using CodingConnected.TLCFI.NET.Core.Data;
 using CodingConnected.TLCFI.NET.Core.Generic;
 using CodingConnected.TLCFI.NET.Core.Models.Generic;
 using CodingConnected.TLCFI.NET.Core.Models.TLC;
-using CodingConnected.TLCFI.NET.Core.Data;
-using CodingConnected.TLCFI.NET.Core.Generic;
 
 namespace CodingConnected.TLCFI.NET.Core.Proxies
 {
@@ -43,14 +41,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method SubscribeAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-                _logger.Trace(e, "Calling method SubscribeAsync failed:");
+                _logger.Error(e, "Calling method SubscribeAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method SubscribeAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method SubscribeAsync failed: ");
+                _logger.Error(e, "Calling method SubscribeAsync failed: ");
                 throw;
             }
         }
@@ -63,14 +59,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method UpdateStateAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-                _logger.Trace(e, "Calling method UpdateStateAsync failed:");
+                _logger.Error(e, "Calling method UpdateStateAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method UpdateStateAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method UpdateStateAsync failed: ");
+                _logger.Error(e, "Calling method UpdateStateAsync failed: ");
                 throw;
             }
         }
@@ -83,14 +77,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method NotifyEventAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-                _logger.Trace(e, "Calling method NotifyEventAsync failed:");
+                _logger.Error(e, "Calling method NotifyEventAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method NotifyEventAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method NotifyEventAsync failed: ");
+                _logger.Error(e, "Calling method NotifyEventAsync failed: ");
                 throw;
             }
         }
@@ -103,14 +95,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method RegisterAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-                _logger.Trace(e, "Calling method RegisterAsync failed:");
+                _logger.Error(e, "Calling method RegisterAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method RegisterAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method RegisterAsync failed: ");
+                _logger.Error(e, "Calling method RegisterAsync failed: ");
                 throw;
             }
         }
@@ -124,14 +114,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method DeregisterAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-                _logger.Trace(e, "Calling method DeregisterAsync failed:");
+                _logger.Error(e, "Calling method DeregisterAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method DeregisterAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method DeregisterAsync failed: ");
+                _logger.Error(e, "Calling method DeregisterAsync failed: ");
                 throw;
             }
         }
@@ -144,14 +132,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method AliveAsync failed. See trace for exception details.");
-                _logger.Trace(e, "Calling method AliveAsync failed: {0}. Original exception: ", e.RpcMessage);
+                _logger.Error(e, "Calling method AliveAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method AliveAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method AliveAsync failed: ");
+                _logger.Error(e, "Calling method AliveAsync failed: ");
                 throw;
             }
         }
@@ -165,14 +151,12 @@ namespace CodingConnected.TLCFI.NET.Core.Proxies
             }
             catch (JsonRpcException e)
             {
-                _logger.Error("Calling method ReadMetaAsync failed: {0}. See trace for exception details.", e.RpcMessage);
-                _logger.Trace(e, "Calling method ReadMetaAsync failed:");
+                _logger.Error(e, "Calling method ReadMetaAsync failed: {0}. Exception: ", e.RpcMessage);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.Error("Calling method ReadMetaAsync failed; see trace for details");
-                _logger.Trace(e, "Calling method ReadMetaAsync failed: ");
+                _logger.Error(e, "Calling method ReadMetaAsync failed: ");
                 throw;
             }
         }

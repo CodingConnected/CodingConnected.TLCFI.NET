@@ -37,7 +37,7 @@ namespace CodingConnected.TLCFI.NET.Core.Generic
             }
             else
             {
-                _logger.Trace("SendDataAsync called, but not connected to peer.");
+                _logger.Warn("SendDataAsync called, but not connected to peer.");
             }
         }
 
