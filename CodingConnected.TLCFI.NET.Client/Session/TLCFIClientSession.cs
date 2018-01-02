@@ -129,9 +129,9 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                             _sessionCancellationToken);
                         _logger.Info("Deregistered succesfully from TLC.");
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        // ignore
+                        _logger.Error(e, "Error while deregistering: ");
                     }
                 }
                 SessionEnded?.Invoke(this, expected);

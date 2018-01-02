@@ -79,7 +79,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         {
             var objectStateUpdate = new[]
             {
-                new ObjectStateUpdate()
+                new ObjectStateUpdate
                 {
                     Objects = new ObjectReference()
                     {
@@ -92,7 +92,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                     }
                 }
             };
-            return new ObjectStateUpdateGroup()
+            return new ObjectStateUpdateGroup
             {
                 Ticks = TLCFIClient.CurrentTicks,
                 Update = objectStateUpdate

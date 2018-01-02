@@ -75,6 +75,7 @@ namespace CodingConnected.TLCFI.NET.Client
             }
             catch (TLCFISessionException e)
             {
+				_logger.Fatal(e, "Error initializing session. " + (e.Fatal ? "(FATAL!): " : ": "));
                 throw new TLCFISessionException("Error initializing session. " + (e.Fatal ? "(FATAL!) " : ""), e.Fatal);
             }
         }
@@ -85,7 +86,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
         private async Task<string> RegisterAsync(TLCFIClientSession session, CancellationToken token)
         {
-            _logger.Info("Registering with TLC");
+            _logger.Info("Registering with TLC.");
             try
             {
                 // Register with TLC
@@ -96,20 +97,22 @@ namespace CodingConnected.TLCFI.NET.Client
                     Version = TLCFIDataProvider.Default.ProtocolVersion,
                     Type = ApplicationType.Control
                 };
-                if (!string.IsNullOrWhiteSpace(_config.IveraUri))
-                {
-                    rr.Uri = new Uri(_config.IveraUri);
-                }
-                else
-                {
-                    rr.Uri = new Uri("http://10.0.0.0:12345");
-                }
+	            try
+	            {
+		            rr.Uri = !string.IsNullOrWhiteSpace(_config.IveraUri)
+			            ? new Uri(_config.IveraUri)
+			            : new Uri("http://10.0.0.0:12345");
+	            }
+	            catch (Exception e)
+	            {
+		            _logger.Error(e, "Error configuring IVERA uri; reverting to default [http://10.0.0.0:12345]. Exception: ");
+	            }
                 var reply = await session.TLCProxy.RegisterAsync(rr, token);
 
 	            _facilitiesRef = reply?.Facilities ?? throw new RegistrationFailedException("Received null as a reply to RegisterAsync().");
 
                 session.State.Registered = true;
-                _logger.Info("Registered succesful");
+                _logger.Info("Registered succesful.");
                 return reply.Sessionid;
             }
             catch (JsonRpcException e)
@@ -121,14 +124,14 @@ namespace CodingConnected.TLCFI.NET.Client
             catch (Exception e)
             {
                 session.State.Registered = false;
-                _logger.Info(e, "Register failed with non-jsonrpc error:");
+                _logger.Info(e, "Register failed with non-jsonrpc error: ");
                 return null;
             }
         }
 
         private async Task<TLCFIClientStateManager> GetSessionDataAsync(string sessionId, TLCFIClientSession session, TLCFIClientStateManager stateManager, CancellationToken token)
         {
-            _logger.Info("Obtaining session data and subscribing to session");
+            _logger.Info("Obtaining session data and subscribing to session.");
             try
             {
                 // Read meta for session
@@ -153,8 +156,7 @@ namespace CodingConnected.TLCFI.NET.Client
                     case ApplicationType.Provider:
                         break;
                     case ApplicationType.Control:
-                        var ct = stateManager.Session as ControlApplication;
-                        if (ct != null)
+	                    if (stateManager.Session is ControlApplication ct)
                         {
                             // Start with Error state: either the TLC will set it to Offline, or we will in SetInitialControlState
                             ct.ReqControlState = ControlState.Error; 
@@ -190,7 +192,7 @@ namespace CodingConnected.TLCFI.NET.Client
             catch (Exception e)
             {
                 session.State.Registered = false;
-                _logger.Info(e, "Register failed with non-jsonrpc error");
+                _logger.Info(e, "Register failed with non-jsonrpc error.");
             }
             return null;
         }
@@ -226,14 +228,14 @@ namespace CodingConnected.TLCFI.NET.Client
                     }
                     else
                     {
-                        _logger.Warn("Error reading META of TLCFacilities: received {0} objects, expected 1",
+                        _logger.Fatal("Error reading META of TLCFacilities: received {0} objects, expected 1",
                             facilitiesMeta?.Meta.Length ?? 0);
                         throw new ArgumentOutOfRangeException();
                     }
                 }
                 else
                 {
-                    _logger.Warn(
+                    _logger.Error(
                         "Error reading META of TLCFacilities: reference to facilities is null; was Register() succesfully called?");
                     throw new NullReferenceException();
                 }
@@ -249,7 +251,7 @@ namespace CodingConnected.TLCFI.NET.Client
         {
             ObjectMeta intersectionMeta = null;
             ObjectData intersectionState = null;
-            var iref = new ObjectReference()
+            var iref = new ObjectReference
             {
                 Ids = new[] { _config.RemoteIntersectionId },
                 Type = TLCObjectType.Intersection
@@ -295,7 +297,7 @@ namespace CodingConnected.TLCFI.NET.Client
             var ins = (Intersection)intersectionState.Data[0];
             var sins = stateManager.InternalIntersections.First(x => x.Id == intersectionState.Objects.Ids[0]);
 
-            // copy state
+            // Copy state
             sins.StateTicks = ins.StateTicks;
             sins.State = ins.State;
             session.State.IntersectionControl = sins.State == IntersectionControlState.Control;
@@ -365,21 +367,21 @@ namespace CodingConnected.TLCFI.NET.Client
             bool ok;
             if (_config.UseIdsFromTLCForSubscription)
             {
-                _logger.Info("Checking CLA config against TLC META data");
+                _logger.Info("Checking CLA config against TLC META data.");
                 ok = TLCFIClientCompatabilityChecker.IsCLACompatibleWithTLC(_config, facilitiesData);
             }
             else
             {
-                _logger.Info("Checking CLA config against Intersection META data");
+                _logger.Info("Checking CLA config against Intersection META data.");
                 ok = TLCFIClientCompatabilityChecker.IsCLACompatibleWithIntersection(_config, intersectionData,
                     _config.SubscribeToAllOutputs ? facilitiesData : null);
             }
             if (ok)
             {
-                _logger.Info("All configured objects were found");
+                _logger.Info("All necessarry configured objects were found.");
                 return;
             }
-            _logger.Error("Not all necessarry objects could be matched.");
+	        _logger.Fatal("Not all necessarry objects could be matched.");
             throw new TLCFISessionException("Not all necessarry object could be matched (FATAL!)", true);
         }
 
@@ -389,7 +391,7 @@ namespace CodingConnected.TLCFI.NET.Client
             {
                 _logger.Warn(
                     "Error configuring application: not authorized with TLC; were Register() and ReadFacilitiesMeta() called?");
-                throw new NotImplementedException();
+                throw new TLCFISessionException("Client is authorized with TLC; were Register() and ReadFacilitiesMeta() called?");
             }
 
             try
@@ -447,7 +449,7 @@ namespace CodingConnected.TLCFI.NET.Client
                             case TLCObjectType.Session: // Special kind of object; gets initialized in Register()
                             case TLCObjectType.TLCFacilities: // Got initialized in ReadFacilitiesMeta()
                             case TLCObjectType.Intersection: // Got initialized in ReadFacilitiesMeta()
-                                throw new NotImplementedException();
+                                throw new NotSupportedException();
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }
@@ -465,11 +467,11 @@ namespace CodingConnected.TLCFI.NET.Client
                 throw new TLCFISessionException("Error reading META from TLCFacilities.");
             }
 
-            try
-            {
-                stateManager.Initialize(_config.RemoteIntersectionId); // Check and init
-            }
-            catch (DuplicateNameException)
+	        try
+	        {
+		        stateManager.Initialize(_config.RemoteIntersectionId); // Check and init
+	        }
+	        catch (DuplicateNameException)
             {
                 throw new TLCFISessionException("Error checking META data from TLCFacilities (FATAL!)", true);
             }
@@ -503,7 +505,7 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var ssg = stateManager.InternalSignalGroups.First(x => x.Id == data.Objects.Ids[i]);
                                     if (ssg == null)
                                     {
-                                        throw new NotImplementedException();
+                                        throw new NullReferenceException();
                                     }
                                     // copy state
                                     ssg.StateTicks = sg.StateTicks;
@@ -518,8 +520,8 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var sd = stateManager.InternalDetectors.First(x => x.Id == data.Objects.Ids[i]);
                                     if (sd == null)
                                     {
-                                        throw new NotImplementedException();
-                                    }
+										throw new NullReferenceException();
+									}
                                     // copy state
                                     sd.StateTicks = d.StateTicks;
                                     sd.State = d.State;
@@ -534,8 +536,8 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var sip = stateManager.InternalInputs.First(x => x.Id == data.Objects.Ids[i]);
                                     if (sip == null)
                                     {
-                                        throw new NotImplementedException();
-                                    }
+										throw new NullReferenceException();
+									}
                                     // copy state
                                     sip.StateTicks = ip.StateTicks;
                                     sip.State = ip.State;
@@ -550,8 +552,8 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var sop = stateManager.InternalOutputs.First(x => x.Id == data.Objects.Ids[i]);
                                     if (sop == null)
                                     {
-                                        throw new NotImplementedException();
-                                    }
+										throw new NullReferenceException();
+									}
                                     // copy state
                                     sop.StateTicks = op.StateTicks;
                                     sop.State = op.State;
@@ -565,8 +567,8 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var sins = stateManager.InternalIntersections.First(x => x.Id == data.Objects.Ids[i]);
                                     if (sins == null)
                                     {
-                                        throw new NotImplementedException();
-                                    }
+										throw new NullReferenceException();
+									}
                                     // copy state
                                     sins.StateTicks = ins.StateTicks;
                                     sins.State = ins.State;
@@ -580,8 +582,8 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var sspv = stateManager.SpvhGenerator;
                                     if (spv == null)
                                     {
-                                        throw new NotImplementedException();
-                                    }
+										throw new NullReferenceException();
+									}
                                     // copy state
                                     sspv.FaultState = spv.FaultState;
                                 }
@@ -593,8 +595,8 @@ namespace CodingConnected.TLCFI.NET.Client
                                     var sv = stateManager.InternalVariables.First(x => x.Id == data.Objects.Ids[i]);
                                     if (sv == null)
                                     {
-                                        throw new NotImplementedException();
-                                    }
+										throw new NullReferenceException();
+									}
                                     // copy state
                                     sv.Lifetime = v.Lifetime;
                                     sv.Value = v.Value;
@@ -602,7 +604,7 @@ namespace CodingConnected.TLCFI.NET.Client
                                 break;
                             case TLCObjectType.Session:         // Already subscribed in Register()
                             case TLCObjectType.TLCFacilities:   // This object does not have a state
-                                throw new NotImplementedException();
+								throw new NotSupportedException();
                             default:
                                 throw new ArgumentOutOfRangeException();
                         }

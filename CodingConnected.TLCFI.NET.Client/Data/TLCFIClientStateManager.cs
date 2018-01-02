@@ -115,20 +115,17 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             };
             if (InternalIntersections.Count == 0)
             {
-                throw new TLCFISessionException("No intersections are present in the collected data; cannot initialize StateManager.");
+                throw new TLCFISessionException("No intersections are present in the collected data; cannot initialize StateManager.", true);
             }
             foreach (var l in ids)
             {
                 foreach (var item1 in l)
                 {
-                    foreach (var item2 in l)
-                    {
-                        if (item1 != item2 && item1.Id == item2.Id)
-                        {
-                            throw new DuplicateNameException($"Found duplicate IDs: type {item1.ObjectType}, id {item1.Id}. " +
-                                                             "All Ids in TLC config must be unique per type.");
-                        }
-                    }
+	                if (l.Any(item2 => item1 != item2 && item1.Id == item2.Id))
+	                {
+		                throw new DuplicateNameException($"Found duplicate IDs: type {item1.ObjectType}, id {item1.Id}. " +
+		                                                 "All Ids in TLC config must be unique per type.");
+	                }
                 }
             }
 
@@ -281,7 +278,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             foreach (var id in objectreference.Ids)
             {
                 var pfid = GetTypePrefix(objectreference.Type) + id;
-                if (!StaticObjects.TryGetValue(pfid, out object ob))
+                if (!StaticObjects.TryGetValue(pfid, out var ob))
                 {
                     if (!DynamicObjects.TryGetValue(pfid, out ob))
                     {
