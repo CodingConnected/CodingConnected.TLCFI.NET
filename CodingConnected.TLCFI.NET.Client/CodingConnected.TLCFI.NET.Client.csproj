@@ -61,9 +61,6 @@
     <Compile Include="Session\TLCFIClientSessionJsonRpcHandler.cs" />
     <Compile Include="Session\TLCFIClientSessionManager.cs" />
     <Compile Include="Session\TLCFIClientSessionState.cs" />
-    <Content Include="tlcfi_settings.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.Core.csproj">

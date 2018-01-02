@@ -65,7 +65,6 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
-
         #endregion // Private Properties
 
         #region Public Properties
@@ -75,10 +74,30 @@ namespace CodingConnected.TLCFI.NET.Client
 
         public static uint CurrentTicks => TicksGenerator.Default.GetCurrentTicks();
 
+		/// <summary>
+		/// Indicates wether or not the client is connected to a server
+		/// </summary>
         public bool Connected => _session?.Connected ?? false;
+
+		/// <summary>
+		/// True if the configuration procedure has been succesfull
+		/// </summary>
         public bool Configured => _session?.State?.Configured ?? false;
+
+		/// <summary>
+		/// True if the client has control over a remote TLC facilities
+		/// </summary>
         public bool SessionInControl => _session?.State?.SessionControl ?? false;
+
+		/// <summary>
+		/// True if the client has control over the configured intersection
+		/// </summary>
         public bool IntersectionInControl => _session?.State?.IntersectionControl ?? false;
+
+		/// <summary>
+		/// Holds the average response time of the remote TLC facilities, 
+		/// measused over the last 50 RPC calls
+		/// </summary>
         public double AvgResponseToRequestsTime => StateManager.AvgResponseToRequestsTime;
 
         /// <summary>
@@ -228,12 +247,14 @@ namespace CodingConnected.TLCFI.NET.Client
                     try
                     {
                         await _clientInitializer.InitializeSession(_session, StateManager, sessionToken);
-                        // set initial state
+                        
+						// set initial state
                         StateManager.InternalSignalGroups.ForEach(x => SignalGroupStateChanged?.Invoke(this, x));
                         StateManager.InternalDetectors.ForEach(x => DetectorStateChanged?.Invoke(this, x));
                         StateManager.InternalInputs.ForEach(x => InputStateChanged?.Invoke(this, x));
                         StateManager.InternalOutputs.ForEach(x => OutputStateChanged?.Invoke(this, x));
-                        // subscribe to state changes
+                        
+						// subscribe to state changes
                         StateManager.SignalGroupStateChanged += (o, e) => SignalGroupStateChanged?.Invoke(this, e);
                         StateManager.DetectorStateChanged += (o, e) => DetectorStateChanged?.Invoke(this, e);
                         StateManager.InputStateChanged += (o, e) => InputStateChanged?.Invoke(this, e);
@@ -255,12 +276,12 @@ namespace CodingConnected.TLCFI.NET.Client
                     }
                     catch (TaskCanceledException)
                     {
+						// Occurs if the method was cancelled
                     }
                     catch (Exception e)
                     {
-                        _logger.Error(
-                            "Session could not be started and configured correctly and will be closed. See trace for details.");
-                        _logger.Trace(e, "Session could not be started and configured correctly:");
+                        _logger.Error(e, 
+                            "Session could not be started and configured correctly and will be closed. Exception: ");
                         await _sessionManager.EndActiveSessionAsync(false);
                     }
                     await Task.Delay(-1, sessionToken);
@@ -270,7 +291,7 @@ namespace CodingConnected.TLCFI.NET.Client
                 {
 
                 }
-            } while (_sessionStarted == true &&
+            } while (_sessionStarted &&
                      _config.AutoReconnect && 
                      !FatalErrorOccured && 
                      !token.IsCancellationRequested);

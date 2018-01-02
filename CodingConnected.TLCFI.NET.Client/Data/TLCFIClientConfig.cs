@@ -71,7 +71,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
         public bool UseIdsFromTLCForSubscription { get; [UsedImplicitly] set; }
 
         /// <summary>
-        /// Subscribe to all outputs, not only the exclusive one connected to configured intersection
+        /// Subscribe to all outputs, not only the exclusive ones connected to the configured intersection
         /// Note: this has no effect if UseIdsFromTLCForSubscription is set to true
         /// </summary>
         public bool SubscribeToAllOutputs { get; [UsedImplicitly] set; }
@@ -84,7 +84,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
 
         /// <summary>
         /// Maximum number of times the TLC Facilities can set the ControlState for the session to Error,
-        /// before this is considered fatal
+        /// before this is considered fatal and automatic reconnecting (if configured) will halt
         /// </summary>
         public int MaxSessionErrorCount { get; [UsedImplicitly] set; }
 

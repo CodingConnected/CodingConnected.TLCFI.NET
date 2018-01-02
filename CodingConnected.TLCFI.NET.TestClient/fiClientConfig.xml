@@ -22,7 +22,7 @@
   <AutoReconnect>true</AutoReconnect>
   <MaxSessionErrorCount>5</MaxSessionErrorCount>
 
-
+  <!-- tlcfi object ids -->
   <SignalGroupIds>
     <Id>fc02</Id>
     <Id>fc03</Id>

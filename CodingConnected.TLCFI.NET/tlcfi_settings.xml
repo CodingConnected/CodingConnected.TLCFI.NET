@@ -4,8 +4,6 @@
   <AliveReceiveTimeOut>5000</AliveReceiveTimeOut>
   <MaxRpcDuration>1000</MaxRpcDuration>
   <MaxRpcDurationSession>1000</MaxRpcDurationSession>
-  <BootYellowFlashTime>5</BootYellowFlashTime>
-  <BootYellowTime>3</BootYellowTime>
-  <AutoReconnected>false</AutoReconnected>
-  <ReleaseControlTime>30000</ReleaseControlTime>
+  <MaxReleaseControlDuration>30000</MaxReleaseControlDuration>
+  <LogAliveTrace>false</LogAliveTrace>
 </TLCFISettings>

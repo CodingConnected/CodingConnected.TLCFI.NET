@@ -50,7 +50,6 @@
     <Content Include="NLog.xsd">
       <Paket>True</Paket>
     </Content>
-    <Compile Include="Class1.cs" />
     <Compile Include="Models\ObjectIDAttribute.cs" />
     <Compile Include="Data\ITLCFIDataProvider.cs" />
     <Compile Include="Helpers\ControlStateChangedEventArgs.cs" />
@@ -148,6 +147,9 @@
     <Compile Include="Tools\TicksGenerator.cs" />
     <Compile Include="Tools\TimestampGenerator.cs" />
     <Compile Include="Tools\ValueChecker.cs" />
+    <Content Include="tlcfi_settings.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
