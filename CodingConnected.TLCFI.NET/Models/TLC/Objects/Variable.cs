@@ -81,8 +81,9 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             set
             {
                 Tools.ValueChecker.CheckValidVariableLifetime(value);
-                _lifetime = value; 
-            }
+                ChangedState?.Invoke(this, EventArgs.Empty);
+	            _lifetime = value;
+			}
         }
 
         [JsonProperty("reqLifetime")]

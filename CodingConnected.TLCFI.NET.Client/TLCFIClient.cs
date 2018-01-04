@@ -551,12 +551,61 @@ namespace CodingConnected.TLCFI.NET.Client
 			}
 		}
 
-        /// <summary>
-        /// If needed, sets the ReqState property of the output with the given id to reqState
-        /// Does nothing if the value of the ReqState property is already as requested
-        /// Throws TLCObjectNotFoundException if the id is not found
-        /// </summary>
-        public void SetOutputReqState(string id, int reqState)
+		/// <summary>
+		/// If needed, sets the ReqPredictions property of the signalgroup with the given id to reqPredictions
+		/// Does nothing if the value of the ReqPredictions property is already as requested
+		/// Throws TLCObjectNotFoundException if the id is not found
+		/// </summary>
+		public void SetVariableReqValueAndLifetime(string id, int reqValue, int reqLifetime)
+		{
+			if (_config.ApplicationType != ApplicationType.Control)
+			{
+				_logger.Warn("SetVariableReqValueAndLifetime() may only be called when ApplicationType is Control");
+				return;
+			}
+			var variable = StateManager.InternalVariables.FirstOrDefault(x => x.Id == id);
+			if (variable != null)
+			{
+				if (!((StateManager.ControlSession.ControlState == ControlState.InControl ||
+					   StateManager.ControlSession.ControlState == ControlState.EndControl) &&
+					  StateManager.Intersection.State == IntersectionControlState.Control))
+				{
+					_logger.Warn("Not in control of intersection; may not set value and lifetime for variable with id {0}", variable.Id);
+					return;
+				}
+				// Check previous if a request has been made that has not yet been confirmed
+				if (StateManager.RequestedStates.ContainsKey("va" + variable.Id))
+				{
+					_logger.Warn(
+						"While setting ReqValue and ReqLifetime: still awaiting previous request to set these for variable {0}; will clear awaiting buffer.",
+						id);
+					StateManager.RequestedStates.Remove("va" + variable.Id);
+				}
+				else if (reqValue != variable.Value || reqLifetime != variable.Lifetime)
+				{
+					StateManager.RequestedStates.Add("va" + variable.Id, CurrentTicks);
+				}
+				else
+				{
+					_logger.Warn("While setting ReqValue and ReqLifetime: variable {0} already has identical values set.", id);
+				}
+				variable.ReqLifetime = reqLifetime;
+				variable.ReqValue = reqValue;
+				StateManager.SetObjectStateChanged(id, TLCObjectType.Variable);
+			}
+			else
+			{
+				_logger.Error("SetVariableReqValueAndLifetime: id {0} not found in StateManager instance.", id);
+				throw new TLCObjectNotFoundException(id, TLCObjectType.Variable);
+			}
+		}
+
+		/// <summary>
+		/// If needed, sets the ReqState property of the output with the given id to reqState
+		/// Does nothing if the value of the ReqState property is already as requested
+		/// Throws TLCObjectNotFoundException if the id is not found
+		/// </summary>
+		public void SetOutputReqState(string id, int reqState)
         {
 
             if (_config.ApplicationType == ApplicationType.Consumer)

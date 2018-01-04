@@ -205,7 +205,22 @@ namespace CodingConnected.TLCFI.NET.Client.Data
             foreach (var v in InternalVariables)
             {
                 v.ChangedState += (o, e) => { VariableChanged?.Invoke(this, v); };
-                _staticObjects.Add("_v_" + v.Id, v);
+	            v.ChangedState += (o2, e) =>
+	            {
+		            if (RequestedStates.TryGetValue("va" + v.Id, out ulong ticks))
+		            {
+			            // note: wrapping around uint.MaxValue goes by itself in C#
+			            _requestedStatesTimings.Enqueue((int)(TicksGenerator.Default.GetCurrentTicks() - ticks));
+			            if (_requestedStatesTimings.Count > 50)
+			            {
+				            _requestedStatesTimings.Dequeue();
+			            }
+			            AvgResponseToRequestsTime = _requestedStatesTimings.Sum() / (double)_requestedStatesTimings.Count;
+			            RequestedStates.Remove("va" + v.Id);
+		            }
+		            VariableChanged?.Invoke(this, v);
+	            };
+				_staticObjects.Add("_v_" + v.Id, v);
             }
             foreach (var i in InternalIntersections)
             {
