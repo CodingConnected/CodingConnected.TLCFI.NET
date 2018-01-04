@@ -504,15 +504,25 @@ namespace CodingConnected.TLCFI.NET.Client
         }
 
 		/// <summary>
-		/// If needed, sets the ReqPredictions property of the signalgroup with the given id to reqPredictions
-		/// Does nothing if the value of the ReqPredictions property is already as requested
-		/// Throws TLCObjectNotFoundException if the id is not found
+		/// Adds a requested prediction to the list of requested predictions for a given signalgroup.
+		/// The predictions will be sent to the TLC Facilities as an array upon calling of UpdateState().
+		/// <remarks>Note that the values parsed to the function should take the current moment as a 0 reference,
+		/// and offset all predicted values accordingly. 
+		/// The library will add ticks to these values as per TLC-FI protocol.</remarks>
 		/// </summary>
-		public void SetSignalGroupReqPredictions(string id, SignalGroupPrediction[] reqPredictions)
+		/// <param name="id">The ID of the signalgroup</param>
+		/// <param name="state">The state for which a prediction is added</param>
+		/// <param name="confidence">Confidence of the prediction (between 0 and 100)</param>
+		/// <param name="likelyEnd">The likely end of the prediction</param>
+		/// <param name="startTime">Planned/estimated time the state will start</param>
+		/// <param name="minEnd">Minimum duration of the state (this value should be larger than startTime)</param>
+		/// <param name="maxEnd">Maximum duration of the state (this value should be larger than minEnd)</param>
+		/// <param name="next">Estimated time when the state will happen next</param>
+		public void AddSignalGroupReqPrediction(string id, SignalGroupState state, int confidence, uint? likelyEnd, uint? startTime, uint minEnd, uint? maxEnd, uint? next)
 	    {
 			if (_config.ApplicationType != ApplicationType.Control)
 			{
-				_logger.Warn("SetSignalGroupReqPredictions() may only be called when ApplicationType is Control");
+				_logger.Warn("AddSignalGroupReqPrediction() may only be called when ApplicationType is Control");
 				return;
 			}
 			var signalGroup = StateManager.InternalSignalGroups.FirstOrDefault(x => x.Id == id);
@@ -525,24 +535,45 @@ namespace CodingConnected.TLCFI.NET.Client
 					_logger.Warn("Not in control of intersection; may not set predictions for signalgroup with id {0}", signalGroup.Id);
 					return;
 				}
-				// Check previous if a request has been made that has not yet been confirmed
-				if (StateManager.RequestedStates.ContainsKey("pr" + signalGroup.Id))
+
+				var pred = new SignalGroupPrediction
 				{
-					_logger.Warn(
-						"While setting ReqPredictions: still awaiting previous request to set ReqPredictions for signalgroup {0} to {1}; will clear awaiting buffer.",
-						id, signalGroup.ReqState);
-					StateManager.RequestedStates.Remove("pr" + signalGroup.Id);
+					State = state,
+					Confidence = confidence,
+					LikelyEnd = likelyEnd + CurrentTicks,
+					StartTime = startTime + CurrentTicks,
+					MinEnd = minEnd + CurrentTicks,
+					MaxEnd = maxEnd + CurrentTicks,
+					Next = next + CurrentTicks
+				};
+
+				// TODO: check validity of prediction (probably without checking for conflicts)
+
+				// Check previous if a request has been made that has not yet been confirmed
+				if (StateManager.RequestedStates.TryGetValue("pr" + signalGroup.Id, out var ticks))
+				{
+					if (ticks != CurrentTicks)
+					{
+						_logger.Warn(
+							"While adding prediction: still awaiting previous request to set ReqPredictions for signalgroup {0} to {1}; will clear awaiting buffer.",
+							id, signalGroup.ReqState);
+						StateManager.RequestedStates.Remove("pr" + signalGroup.Id);
+					}
 				}
-				else if (!reqPredictions.SequenceEqual(signalGroup.Predictions))
+				else if (!signalGroup.Predictions.Any(x => x.Equals(pred)))
 				{
 					StateManager.RequestedStates.Add("pr" + signalGroup.Id, CurrentTicks);
 				}
 				else
 				{
-					_logger.Warn("While setting ReqPredictions: signalgroup {1} already has identical predictions set.", id);
+					_logger.Warn("While adding predictions: signalgroup {0} already has an identical prediction.", id);
 				}
-				signalGroup.ReqPredictions = reqPredictions;
-				StateManager.SetObjectStateChanged(id, TLCObjectType.SignalGroup);
+				signalGroup.InternalReqPredictions.Add(pred);
+				signalGroup.ReqPredictions = signalGroup.InternalReqPredictions.ToArray();
+				if (signalGroup.InternalReqPredictions.Count == 1)
+				{
+					StateManager.SetObjectStateChanged(id, TLCObjectType.SignalGroup);
+				}
 			}
 			else
 			{

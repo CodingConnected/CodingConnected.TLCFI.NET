@@ -59,6 +59,7 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             {
                 Tools.ValueChecker.CheckValidVariableState(value);
                 ChangedState?.Invoke(this, EventArgs.Empty);
+	            _valueChanged = true;
                 _value = value;
             }
         }
@@ -70,6 +71,7 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             set
             {
                 Tools.ValueChecker.CheckValidVariableState(value);
+	            _reqValueChanged = true;
                 _reqValue = value; 
             }
         }
@@ -82,6 +84,7 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             {
                 Tools.ValueChecker.CheckValidVariableLifetime(value);
                 ChangedState?.Invoke(this, EventArgs.Empty);
+	            _lifetimeChanged = true;
 	            _lifetime = value;
 			}
         }
@@ -93,6 +96,7 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             set
             {
                 Tools.ValueChecker.CheckValidVariableLifetime(value);
+	            _reqLifetimeChanged = true;
                 _reqLifetime = value; 
             }
         }

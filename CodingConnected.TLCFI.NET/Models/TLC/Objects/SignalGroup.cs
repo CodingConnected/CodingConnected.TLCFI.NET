@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using CodingConnected.TLCFI.NET.Core.Models.TLC.Base;
 using CodingConnected.TLCFI.NET.Core.Tools;
@@ -98,7 +99,9 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             }
         }
 
-        [JsonProperty("reqPredictions")]
+	    public List<SignalGroupPrediction> InternalReqPredictions { get; set; } = new List<SignalGroupPrediction>();
+
+		[JsonProperty("reqPredictions")]
         public SignalGroupPrediction[] ReqPredictions
         {
             get => _reqPredictions;
@@ -148,6 +151,7 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
             _reqStateChanged = false;
             _predictionsChanged = false;
             _reqPredictionsChanged = false;
+	        InternalReqPredictions.Clear();
         }
 
         public override object GetMeta()
