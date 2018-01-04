@@ -69,9 +69,18 @@ namespace CodingConnected.TLCFI.NET.Client
 
         #region Public Properties
 
+		/// <summary>
+		/// Exposes the internal state of the session with a TLC Facilities,
+		/// and all configured objects. 
+		/// This is exposed for convenience and debugging purposes.
+		/// <remarks>Use properties and events of TLCFIClient directly where possible!</remarks>
+		/// </summary>
         [UsedImplicitly]
         public TLCFIClientStateManager StateManager { get; internal set; }
 
+		/// <summary>
+		/// Current ticks of the application
+		/// </summary>
         public static uint CurrentTicks => TicksGenerator.Default.GetCurrentTicks();
 
 		/// <summary>
@@ -493,6 +502,54 @@ namespace CodingConnected.TLCFI.NET.Client
                 throw new TLCObjectNotFoundException(id, TLCObjectType.SignalGroup);
             }
         }
+
+		/// <summary>
+		/// If needed, sets the ReqPredictions property of the signalgroup with the given id to reqPredictions
+		/// Does nothing if the value of the ReqPredictions property is already as requested
+		/// Throws TLCObjectNotFoundException if the id is not found
+		/// </summary>
+		public void SetSignalGroupReqPredictions(string id, SignalGroupPrediction[] reqPredictions)
+	    {
+			if (_config.ApplicationType != ApplicationType.Control)
+			{
+				_logger.Warn("SetSignalGroupReqPredictions() may only be called when ApplicationType is Control");
+				return;
+			}
+			var signalGroup = StateManager.InternalSignalGroups.FirstOrDefault(x => x.Id == id);
+			if (signalGroup != null)
+			{
+				if (!((StateManager.ControlSession.ControlState == ControlState.InControl ||
+					   StateManager.ControlSession.ControlState == ControlState.EndControl) &&
+					  StateManager.Intersection.State == IntersectionControlState.Control))
+				{
+					_logger.Warn("Not in control of intersection; may not set predictions for signalgroup with id {0}", signalGroup.Id);
+					return;
+				}
+				// Check previous if a request has been made that has not yet been confirmed
+				if (StateManager.RequestedStates.ContainsKey("pr" + signalGroup.Id))
+				{
+					_logger.Warn(
+						"While setting ReqPredictions: still awaiting previous request to set ReqPredictions for signalgroup {0} to {1}; will clear awaiting buffer.",
+						id, signalGroup.ReqState);
+					StateManager.RequestedStates.Remove("pr" + signalGroup.Id);
+				}
+				else if (!reqPredictions.SequenceEqual(signalGroup.Predictions))
+				{
+					StateManager.RequestedStates.Add("pr" + signalGroup.Id, CurrentTicks);
+				}
+				else
+				{
+					_logger.Warn("While setting ReqPredictions: signalgroup {1} already has identical predictions set.", id);
+				}
+				signalGroup.ReqPredictions = reqPredictions;
+				StateManager.SetObjectStateChanged(id, TLCObjectType.SignalGroup);
+			}
+			else
+			{
+				_logger.Error("SetSignalGourpReqState: id {0} not found in StateManager instance.", id);
+				throw new TLCObjectNotFoundException(id, TLCObjectType.SignalGroup);
+			}
+		}
 
         /// <summary>
         /// If needed, sets the ReqState property of the output with the given id to reqState

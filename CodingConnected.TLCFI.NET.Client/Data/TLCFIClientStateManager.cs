@@ -74,6 +74,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
         internal event EventHandler<List<Tuple<string, TLCObjectType>>> StateChanged;
         internal event EventHandler<Detector> DetectorStateChanged;
         internal event EventHandler<SignalGroup> SignalGroupStateChanged;
+        internal event EventHandler<SignalGroup> SignalGroupPredictionsChanged;
         internal event EventHandler<Input> InputStateChanged;
         internal event EventHandler<Output> OutputStateChanged;
         internal event EventHandler<Variable> VariableChanged;
@@ -149,7 +150,22 @@ namespace CodingConnected.TLCFI.NET.Client.Data
                     }
                     SignalGroupStateChanged?.Invoke(this, sg);
                 };
-                _staticObjects.Add("_sg_" + sg.Id, sg);
+	            sg.ChangedPredictions += (o, e) =>
+	            {
+		            if (RequestedStates.TryGetValue("pr" + sg.Id, out ulong ticks))
+		            {
+			            // note: wrapping around uint.MaxValue goes by itself in C#
+			            _requestedStatesTimings.Enqueue((int)(TicksGenerator.Default.GetCurrentTicks() - ticks));
+			            if (_requestedStatesTimings.Count > 50)
+			            {
+				            _requestedStatesTimings.Dequeue();
+			            }
+			            AvgResponseToRequestsTime = _requestedStatesTimings.Sum() / (double)_requestedStatesTimings.Count;
+			            RequestedStates.Remove("pr" + sg.Id);
+		            }
+		            SignalGroupPredictionsChanged?.Invoke(this, sg);
+	            };
+				_staticObjects.Add("_sg_" + sg.Id, sg);
             }
             foreach (var d in InternalDetectors)
             {

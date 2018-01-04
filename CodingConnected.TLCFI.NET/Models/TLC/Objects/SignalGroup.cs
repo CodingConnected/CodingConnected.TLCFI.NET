@@ -126,8 +126,9 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
                 }
                 _predictions = value;
                 _predictionsChanged = true;
+                ChangedPredictions?.Invoke(this, EventArgs.Empty);
                 StateTicks = TicksGenerator.Default.GetCurrentTicks();
-            }
+			}
         }
 
         #endregion // Properties
@@ -135,12 +136,13 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
         #region Events
 
         public event EventHandler ChangedState;
+        public event EventHandler ChangedPredictions;
 
-        #endregion // Events
+		#endregion // Events
 
-        #region TLCObjectBase Methods
+		#region TLCObjectBase Methods
 
-        public override void ResetChanged()
+		public override void ResetChanged()
         {
             _stateChanged = false;
             _reqStateChanged = false;

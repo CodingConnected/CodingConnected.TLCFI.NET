@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 {
-    public class SignalGroupPrediction
+    public class SignalGroupPrediction : IEquatable<SignalGroupPrediction>
     {
         private int? _confidence;
 
@@ -41,7 +41,18 @@ namespace CodingConnected.TLCFI.NET.Core.Models.TLC
 
         [JsonProperty("next")]
         public uint? Next { get; set; }      // ticks
-        
-        #endregion // Properties
+
+		#endregion // Properties
+
+		#region IEquatable
+
+		public bool Equals(SignalGroupPrediction other)
+	    {
+		    if (ReferenceEquals(null, other)) return false;
+		    if (ReferenceEquals(this, other)) return true;
+		    return _confidence == other._confidence && State == other.State && StartTime == other.StartTime && MinEnd == other.MinEnd && MaxEnd == other.MaxEnd && LikelyEnd == other.LikelyEnd && Next == other.Next;
+	    }
+		
+		#endregion // IEquatable
     }
 }
