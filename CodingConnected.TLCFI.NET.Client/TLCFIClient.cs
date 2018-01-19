@@ -128,6 +128,12 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
+		/// <summary>
+		/// Exposes the handover state as requested by the TLC facilities. This may be used
+		/// to act accordingly when releasing control.
+		/// </summary>
+	    public HandoverCapability? RequestedHandover => StateManager.ControlSession?.ReqHandover;
+
         #endregion // Public Properties
 
         #region Events
