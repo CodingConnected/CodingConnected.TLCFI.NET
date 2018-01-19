@@ -49,6 +49,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TLCFIClientStateManagerTests.cs" />
     <Compile Include="TLCFITestHelpers.cs" />
     <Compile Include="TLCFIClientTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

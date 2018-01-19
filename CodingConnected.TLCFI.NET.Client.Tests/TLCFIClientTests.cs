@@ -1,14 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CodingConnected.TLCFI.NET.Client.Data;
 using CodingConnected.TLCFI.NET.Client.Session;
 using CodingConnected.TLCFI.NET.Core.Exceptions;
-using CodingConnected.TLCFI.NET.Core.Models.Generic;
-using CodingConnected.TLCFI.NET.Core.Models.TLC;
 using NSubstitute;
 using NUnit.Framework;
 

@@ -845,21 +845,8 @@ namespace CodingConnected.TLCFI.NET.Client
                     }
                     break;
                 case ControlState.InControl:
-                    foreach (var sg in StateManager.InternalSignalGroups)
-                    {
-                        sg.ReqState = null;
-                        sg.ResetChanged();
-                    }
-                    foreach (var os in StateManager.InternalOutputs)
-                    {
-                        os.ReqState = null;
-                        os.ResetChanged();
-                    }
-                    foreach (var it in StateManager.InternalIntersections)
-                    {
-                        it.ReqState = null;
-                        it.ResetChanged();
-                    }
+					// Reset all requested states so we start with nill and send all as needed
+                    StateManager.ResetAllReqStateProperties();
                     GotControl?.Invoke(this, EventArgs.Empty);
                     if (StateManager.Intersection.State != null &&
                         StateManager.Intersection.State.Value != IntersectionControlState.Control &&

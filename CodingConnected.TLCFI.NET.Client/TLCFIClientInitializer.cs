@@ -31,8 +31,7 @@ namespace CodingConnected.TLCFI.NET.Client
         #region Fields
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
-        private TLCFIClientConfig _config;
+		
         private ObjectReference _facilitiesRef;
 
 		#endregion // Fields
@@ -54,31 +53,31 @@ namespace CodingConnected.TLCFI.NET.Client
 
         public async Task InitializeSession(TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token)
         {
-	        if (_config == null)
+	        if (config == null)
 	        {
 		        throw new NullReferenceException("Config is null, has SetConfig been called first?");
 	        }
             try
             {
-                var sessionId = await RegisterAsync(session, token);
+                var sessionId = await RegisterAsync(session, config, token);
                 if (!session.State.Registered) throw new TLCFISessionException("Registering with TLC failed");
                 ApplicationRegistered?.Invoke(this, EventArgs.Empty);
                 session.StartAliveTimers();
-                await GetSessionDataAsync(sessionId, session, stateManager, token);
+                await GetSessionDataAsync(sessionId, session, config, stateManager, token);
                 if (stateManager == null)
                 {
                     return;
                 }
-                await ReadFacilitiesMetaAsync(session, stateManager, token);
+                await ReadFacilitiesMetaAsync(session, config, stateManager, token);
                 Intersection inter = null;
-                if (!_config.UseIdsFromTLCForSubscription)
+                if (!config.UseIdsFromTLCForSubscription)
                 {
-                    inter = await ReadIntersectionMetaAndSubscribeAsync(session, stateManager, token);
+                    inter = await ReadIntersectionMetaAndSubscribeAsync(session, config, stateManager, token);
                 }
-                var refs = CollectAllRefs(stateManager.Facilities, inter);
+                var refs = CollectAllRefs(stateManager.Facilities, inter, config);
 
-                CheckMetaData(stateManager.Facilities, inter);
-                await ReadAllObjectsMetaAsync(refs, session, stateManager, token);
+                CheckMetaData(stateManager.Facilities, inter, config);
+                await ReadAllObjectsMetaAsync(refs, session, config, stateManager, token);
                 await SubscribeAllObjectsAsync(refs, session, stateManager, token);
                 ApplicationConfigured?.Invoke(this, EventArgs.Empty);
                 await SetInitialControlState(session, stateManager);
@@ -95,7 +94,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
         #region Private Methods
 
-        private async Task<string> RegisterAsync(TLCFIClientSession session, CancellationToken token)
+        private async Task<string> RegisterAsync(TLCFIClientSession session, TLCFIClientConfig config, CancellationToken token)
         {
             _logger.Info("Registering with TLC.");
             try
@@ -103,15 +102,15 @@ namespace CodingConnected.TLCFI.NET.Client
                 // Register with TLC
                 var rr = new RegistrationRequest
                 {
-                    Username = _config.Username,
-                    Password = _config.Password,
+                    Username = config.Username,
+                    Password = config.Password,
                     Version = TLCFIDataProvider.Default.ProtocolVersion,
                     Type = ApplicationType.Control
                 };
 	            try
 	            {
-		            rr.Uri = !string.IsNullOrWhiteSpace(_config.IveraUri)
-			            ? new Uri(_config.IveraUri)
+		            rr.Uri = !string.IsNullOrWhiteSpace(config.IveraUri)
+			            ? new Uri(config.IveraUri)
 			            : new Uri("http://10.0.0.0:12345");
 	            }
 	            catch (Exception e)
@@ -140,7 +139,7 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
-        private async Task<TLCFIClientStateManager> GetSessionDataAsync(string sessionId, TLCFIClientSession session, TLCFIClientStateManager stateManager, CancellationToken token)
+        private async Task<TLCFIClientStateManager> GetSessionDataAsync(string sessionId, TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token)
         {
             _logger.Info("Obtaining session data and subscribing to session.");
             try
@@ -161,7 +160,7 @@ namespace CodingConnected.TLCFI.NET.Client
                 // Check and store data, set state for session, and subscribe to session updates
                 stateManager.Session = (TLCSessionBase) meta.Meta[0];
                 ValueChecker.CheckValidObjectId(stateManager.Session.Id);
-                switch (_config.ApplicationType)
+                switch (config.ApplicationType)
                 {
                     case ApplicationType.Consumer:
                     case ApplicationType.Provider:
@@ -171,17 +170,17 @@ namespace CodingConnected.TLCFI.NET.Client
                         {
                             // Start with Error state: either the TLC will set it to Offline, or we will in SetInitialControlState
                             ct.ReqControlState = ControlState.Error; 
-                            ct.StartCapability = _config.StartCapability;
-                            ct.EndCapability = _config.EndCapability;
-                            ct.ReqIntersection = _config.RemoteIntersectionId;
+                            ct.StartCapability = config.StartCapability;
+                            ct.EndCapability = config.EndCapability;
+                            ct.ReqIntersection = config.RemoteIntersectionId;
                         }
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                if (stateManager.Session.SessionType != _config.ApplicationType)
+                if (stateManager.Session.SessionType != config.ApplicationType)
                 {
-                    throw new InvalidTLCObjectTypeException($"Type of Session (ApplicationType) incorrect. Expected {_config.ApplicationType.ToString()}, got {stateManager.Session.SessionType.ToString()}");
+                    throw new InvalidTLCObjectTypeException($"Type of Session (ApplicationType) incorrect. Expected {config.ApplicationType.ToString()}, got {stateManager.Session.SessionType.ToString()}");
                 }
                 var data = await session.TLCProxy.SubscribeAsync(sref, token);
                 token.ThrowIfCancellationRequested();
@@ -208,7 +207,7 @@ namespace CodingConnected.TLCFI.NET.Client
             return null;
         }
 
-        private async Task ReadFacilitiesMetaAsync(TLCFIClientSession session, TLCFIClientStateManager stateManager, CancellationToken token)
+        private async Task ReadFacilitiesMetaAsync(TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token)
         {
             try
             {
@@ -230,11 +229,11 @@ namespace CodingConnected.TLCFI.NET.Client
                         _logger.Info("Succesfully obtained TLCFacilities META data");
                         var facilitiesData = (TLCFacilities)facilitiesMeta.Meta[0];
                         stateManager.Facilities = facilitiesData;
-                        if (!facilitiesData.Intersections.Contains(_config.RemoteIntersectionId))
+                        if (!facilitiesData.Intersections.Contains(config.RemoteIntersectionId))
                         {
                             _logger.Error("Intersection with id {0} not found in TLCFacilities META data",
-                                _config.RemoteIntersectionId);
-                            throw new TLCObjectNotFoundException(_config.RemoteIntersectionId, TLCObjectType.Intersection);
+                                config.RemoteIntersectionId);
+                            throw new TLCObjectNotFoundException(config.RemoteIntersectionId, TLCObjectType.Intersection);
                         }
                     }
                     else
@@ -258,19 +257,19 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
-        private async Task<Intersection> ReadIntersectionMetaAndSubscribeAsync(TLCFIClientSession session, TLCFIClientStateManager stateManager, CancellationToken token)
+        private async Task<Intersection> ReadIntersectionMetaAndSubscribeAsync(TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token)
         {
             ObjectMeta intersectionMeta = null;
             ObjectData intersectionState = null;
             var iref = new ObjectReference
             {
-                Ids = new[] { _config.RemoteIntersectionId },
+                Ids = new[] { config.RemoteIntersectionId },
                 Type = TLCObjectType.Intersection
             };
 
             try
             {
-                _logger.Info("Getting Intersection META data for intersection with id {0}", _config.RemoteIntersectionId);
+                _logger.Info("Getting Intersection META data for intersection with id {0}", config.RemoteIntersectionId);
                 intersectionMeta = await session.TLCProxy.ReadMetaAsync(iref, token);
             }
             catch (JsonRpcException e)
@@ -316,13 +315,13 @@ namespace CodingConnected.TLCFI.NET.Client
             return intersectionData;
         }
 
-        private List<ObjectReference> CollectAllRefs(TLCFacilities facilitiesData, Intersection intersectionData)
+        private List<ObjectReference> CollectAllRefs(TLCFacilities facilitiesData, Intersection intersectionData, TLCFIClientConfig config)
         {
-            if (!_config.UseIdsFromTLCForSubscription && intersectionData == null)
+            if (!config.UseIdsFromTLCForSubscription && intersectionData == null)
             {
                 throw new NullReferenceException("IntersectionData may not be null when ids from intersection must be used to gather META data.");
             }
-            if (_config.UseIdsFromTLCForSubscription && facilitiesData == null)
+            if (config.UseIdsFromTLCForSubscription && facilitiesData == null)
             {
                 throw new NullReferenceException("FacilitiesData may not be null when ids from TLCFacilities must be used to gather META data.");
             }
@@ -330,27 +329,27 @@ namespace CodingConnected.TLCFI.NET.Client
             {
                 new ObjectReference
                 {
-                    Ids = _config.UseIdsFromTLCForSubscription ? facilitiesData.Signalgroups : intersectionData.Signalgroups,
+                    Ids = config.UseIdsFromTLCForSubscription ? facilitiesData.Signalgroups : intersectionData.Signalgroups,
                     Type = TLCObjectType.SignalGroup
                 },
                 new ObjectReference
                 {
-                    Ids = _config.UseIdsFromTLCForSubscription ? facilitiesData.Detectors : intersectionData.Detectors,
+                    Ids = config.UseIdsFromTLCForSubscription ? facilitiesData.Detectors : intersectionData.Detectors,
                     Type = TLCObjectType.Detector
                 },
                 new ObjectReference
                 {
-                    Ids = _config.UseIdsFromTLCForSubscription || _config.SubscribeToAllOutputs ? facilitiesData.Outputs : intersectionData.Outputs,
+                    Ids = config.UseIdsFromTLCForSubscription || config.SubscribeToAllOutputs ? facilitiesData.Outputs : intersectionData.Outputs,
                     Type = TLCObjectType.Output
                 },
                 new ObjectReference
                 {
-                    Ids = _config.UseIdsFromTLCForSubscription ? facilitiesData.Inputs : intersectionData.Inputs,
+                    Ids = config.UseIdsFromTLCForSubscription ? facilitiesData.Inputs : intersectionData.Inputs,
                     Type = TLCObjectType.Input
                 },
                 new ObjectReference
                 {
-                    Ids = _config.UseIdsFromTLCForSubscription
+                    Ids = config.UseIdsFromTLCForSubscription
                         ? new[] {facilitiesData.Spvehgenerator}
                         : new[] {intersectionData.Spvehgenerator},
                     Type = TLCObjectType.SpecialVehicleEventGenerator
@@ -362,7 +361,7 @@ namespace CodingConnected.TLCFI.NET.Client
                 }
             };
 
-            if (_config.UseIdsFromTLCForSubscription)
+            if (config.UseIdsFromTLCForSubscription)
             {
                 refs.Add(new ObjectReference
                 {
@@ -373,19 +372,19 @@ namespace CodingConnected.TLCFI.NET.Client
             return refs;
         }
 
-        private void CheckMetaData(TLCFacilities facilitiesData, Intersection intersectionData)
+        private void CheckMetaData(TLCFacilities facilitiesData, Intersection intersectionData,TLCFIClientConfig config)
         {
             bool ok;
-            if (_config.UseIdsFromTLCForSubscription)
+            if (config.UseIdsFromTLCForSubscription)
             {
                 _logger.Info("Checking CLA config against TLC META data.");
-                ok = TLCFIClientCompatabilityChecker.IsCLACompatibleWithTLC(_config, facilitiesData);
+                ok = TLCFIClientCompatabilityChecker.IsCLACompatibleWithTLC(config, facilitiesData);
             }
             else
             {
                 _logger.Info("Checking CLA config against Intersection META data.");
-                ok = TLCFIClientCompatabilityChecker.IsCLACompatibleWithIntersection(_config, intersectionData,
-                    _config.SubscribeToAllOutputs ? facilitiesData : null);
+                ok = TLCFIClientCompatabilityChecker.IsCLACompatibleWithIntersection(config, intersectionData,
+                    config.SubscribeToAllOutputs ? facilitiesData : null);
             }
             if (ok)
             {
@@ -396,7 +395,7 @@ namespace CodingConnected.TLCFI.NET.Client
             throw new TLCFISessionException("Not all necessarry object could be matched (FATAL!)", true);
         }
 
-        private async Task ReadAllObjectsMetaAsync(IEnumerable<ObjectReference> refs, TLCFIClientSession session, TLCFIClientStateManager stateManager, CancellationToken token)
+        private async Task ReadAllObjectsMetaAsync(IEnumerable<ObjectReference> refs, TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token)
         {
             if (!session.State.Registered)
             {
@@ -480,7 +479,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
 	        try
 	        {
-		        stateManager.Initialize(_config.RemoteIntersectionId); // Check and init
+		        stateManager.Initialize(config.RemoteIntersectionId); // Check and init
 	        }
 	        catch (DuplicateNameException)
             {

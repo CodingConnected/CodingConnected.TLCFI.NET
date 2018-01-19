@@ -50,6 +50,7 @@
     <Content Include="NLog.xsd">
       <Paket>True</Paket>
     </Content>
+    <Compile Include="Helpers\ReqStateResetter.cs" />
     <Compile Include="Models\ObjectIDAttribute.cs" />
     <Compile Include="Data\ITLCFIDataProvider.cs" />
     <Compile Include="Helpers\ControlStateChangedEventArgs.cs" />

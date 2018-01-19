@@ -301,77 +301,7 @@ namespace CodingConnected.TLCFI.NET.Client.Data
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
         }
-
-        internal ObjectMeta GetObjectMeta(ObjectReference objectreference, uint ticks)
-        {
-            // Compile a list of all requested objects
-            var objects = new List<object>();
-            foreach (var id in objectreference.Ids)
-            {
-                var pfid = GetTypePrefix(objectreference.Type) + id;
-                if (!StaticObjects.TryGetValue(pfid, out var ob))
-                {
-                    if (!DynamicObjects.TryGetValue(pfid, out ob))
-                    {
-                        throw new JsonRpcException(
-                            (int)ProtocolErrorCode.InvalidObjectReference,
-                            "Object with type " + objectreference.Type + " and id " + id + " unknown",
-                            null);
-                    }
-                }
-                objects.Add(ob);
-            }
-
-            // Build reply object
-            var meta = new ObjectMeta
-            {
-                Objects = new ObjectReference()
-                {
-                    Ids = objects.Select(x => ((TLCObjectBase)x).Id).ToArray(),
-                    Type = objectreference.Type
-                },
-                Ticks = ticks,
-                Meta = objects.Select(x => ((TLCObjectBase)x).GetMeta()).ToArray()
-            };
-
-            return meta;
-        }
-
-        internal ObjectData GetObjectState(ObjectReference objectreference, uint ticks)
-        {
-            // Compile a list of all requested objects
-            var objects = new List<object>();
-            foreach (var id in objectreference.Ids)
-            {
-                var pfid = GetTypePrefix(objectreference.Type) + id;
-                if (!StaticObjects.TryGetValue(pfid, out object ob))
-                {
-                    if (!DynamicObjects.TryGetValue(pfid, out ob))
-                    {
-                        throw new JsonRpcException(
-                            (int)ProtocolErrorCode.InvalidObjectReference,
-                            "Object with type " + objectreference.Type + " and id " + id + " unknown",
-                            null);
-                    }
-                }
-                objects.Add(ob);
-            }
-
-            // Build reply object
-            var meta = new ObjectData
-            {
-                Objects = new ObjectReference
-                {
-                    Ids = objects.Select(x => ((TLCObjectBase)x).Id).ToArray(),
-                    Type = objectreference.Type
-                },
-                Ticks = ticks,
-                Data = objects.Select(x => ((TLCObjectBase)x).GetState(true)).ToArray()
-            };
-
-            return meta;
-        }
-
+		
         internal void SetObjectStateChanged(string id, TLCObjectType type)
         {
             lock (_locker)
@@ -379,6 +309,32 @@ namespace CodingConnected.TLCFI.NET.Client.Data
                 _changedObjects.Add(new Tuple<string, TLCObjectType>(id, type));
             }
         }
+
+	    internal void ResetAllReqStateProperties()
+	    {
+		    foreach (var sg in InternalSignalGroups)
+		    {
+			    sg.ReqState = null;
+			    sg.ReqPredictions = null;
+			    sg.ResetChanged();
+		    }
+		    foreach (var os in InternalOutputs)
+		    {
+			    os.ReqState = null;
+			    os.ResetChanged();
+		    }
+		    foreach (var it in InternalIntersections)
+		    {
+			    it.ReqState = null;
+			    it.ResetChanged();
+		    }
+		    foreach (var it in InternalVariables)
+		    {
+			    it.ReqLifetime = null;
+			    it.ReqValue = null;
+			    it.ResetChanged();
+		    }
+	    }
 
         #endregion // Internal Methods
 
