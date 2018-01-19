@@ -4,16 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{C908F07C-0F94-442E-ABF2-ED94A5689B59}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CodingConnected.TLCFI.NET.Client</RootNamespace>
-    <AssemblyName>CodingConnected.TLCFI.NET.Client</AssemblyName>
+    <ProjectGuid>{84381532-966C-4F31-9A0B-62E3BC570F67}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TLCFI.NET.Exerciser</RootNamespace>
+    <AssemblyName>TLCFI.NET.Exerciser</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,9 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CodingConnected.JsonRPC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CodingConnected.JsonRPC\CodingConnected.JsonRPC\bin\Debug\CodingConnected.JsonRPC.dll</HintPath>
+    <Reference Include="CodingConnected.JsonRPC">
+      <HintPath>..\..\CodingConnected.JsonRPC\CodingConnected.JsonRPC\bin\Release\CodingConnected.JsonRPC.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -51,25 +52,24 @@
     <Content Include="NLog.xsd">
       <Paket>True</Paket>
     </Content>
-    <Compile Include="Data\TLCFIClientConfig.cs" />
-    <Compile Include="Data\TLCFIClientStateManager.cs" />
-    <Compile Include="Helpers\TLCFIClientCompatabilityChecker.cs" />
+    <Compile Include="TLCFIExerciserSetup.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TLCFIClient.cs" />
-    <Compile Include="TLCFIClientInitializer.cs" />
-    <Compile Include="Session\TLCFIClientSession.cs" />
-    <Compile Include="Session\TLCFIClientSessionJsonRpcHandler.cs" />
-    <Compile Include="Session\TLCFIClientSessionManager.cs" />
-    <Compile Include="Session\TLCFIClientSessionState.cs" />
+    <Compile Include="TLCFIExerciser.cs" />
+    <Content Include="config.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CodingConnected.TLCFI.NET\CodingConnected.TLCFI.NET.Core.csproj">
-      <Project>{e2cdcf40-4d43-47e1-8dea-5db033de7907}</Project>
+      <Project>{E2CDCF40-4D43-47E1-8DEA-5DB033DE7907}</Project>
       <Name>CodingConnected.TLCFI.NET.Core</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="paket.references" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>

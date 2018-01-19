@@ -8,7 +8,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
     /// This class handled TLC-FI JSON-RPC calls and monitors session health via alive checking.
     /// The class responds to JSON-RPC calls by calling methods and setting state in the CLABase class.
     /// </summary>
-    internal class TLCFIClientSessionState
+    public class TLCFIClientSessionState
     {
         #region Fields
 

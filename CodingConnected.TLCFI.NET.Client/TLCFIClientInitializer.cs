@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -20,23 +21,29 @@ using CodingConnected.TLCFI.NET.Core.Extensions;
 
 namespace CodingConnected.TLCFI.NET.Client
 {
-    internal class TLCFIClientInitializer
-    {
+	public interface ITLCFIClientInitializer
+	{
+		Task InitializeSession(TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token);
+	}
+
+	internal class TLCFIClientInitializer : ITLCFIClientInitializer
+	{
         #region Fields
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        private readonly TLCFIClientConfig _config;
+        private TLCFIClientConfig _config;
         private ObjectReference _facilitiesRef;
 
-        #endregion // Fields
+		#endregion // Fields
 
-        #region Properties
-        #endregion // Properties
+		#region Properties
+		
+		#endregion // Properties
 
-        #region Evenets
+		#region Evenets
 
-        [UsedImplicitly]
+		[UsedImplicitly]
         public event EventHandler ApplicationRegistered;
         [UsedImplicitly]
         public event EventHandler ApplicationConfigured;
@@ -45,8 +52,12 @@ namespace CodingConnected.TLCFI.NET.Client
 
         #region Public Methods
 
-        public async Task InitializeSession(TLCFIClientSession session, TLCFIClientStateManager stateManager, CancellationToken token)
+        public async Task InitializeSession(TLCFIClientSession session, TLCFIClientConfig config, TLCFIClientStateManager stateManager, CancellationToken token)
         {
+	        if (_config == null)
+	        {
+		        throw new NullReferenceException("Config is null, has SetConfig been called first?");
+	        }
             try
             {
                 var sessionId = await RegisterAsync(session, token);
@@ -645,9 +656,8 @@ namespace CodingConnected.TLCFI.NET.Client
 
         #region Constructor
 
-        public TLCFIClientInitializer(TLCFIClientConfig config)
+        public TLCFIClientInitializer()
         {
-            _config = config;
         }
 
         #endregion // Constructor

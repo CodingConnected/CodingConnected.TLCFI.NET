@@ -29,9 +29,11 @@ namespace CodingConnected.TLCFI.NET.Client
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        private readonly TLCFIClientSessionManager _sessionManager;
-        private readonly TLCFIClientInitializer _clientInitializer;
-        private readonly TLCFIClientConfig _config;
+        private ITLCFIClientInitializer _clientInitializer;
+	    private ITLCFIClientSessionManager _sessionManager;
+
+		private readonly TLCFIClientConfig _config;
+	    private readonly IPEndPoint _endPoint;
         private readonly CancellationToken _mainCancellationToken;
 
         private TLCFIClientSession _session;
@@ -240,7 +242,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
                     StateManager = new TLCFIClientStateManager();
 
-                    _session = await _sessionManager.GetNewSession(StateManager, sessionToken);
+                    _session = await _sessionManager.GetNewSession(_endPoint, StateManager, sessionToken);
                     if (_session == null)
                     {
                         if (token.IsCancellationRequested)
@@ -255,7 +257,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
                     try
                     {
-                        await _clientInitializer.InitializeSession(_session, StateManager, sessionToken);
+                        await _clientInitializer.InitializeSession(_session, _config, StateManager, sessionToken);
                         
 						// set initial state
                         StateManager.InternalSignalGroups.ForEach(x => SignalGroupStateChanged?.Invoke(this, x));
@@ -271,7 +273,7 @@ namespace CodingConnected.TLCFI.NET.Client
 
                         StateManager.StateChanged += StateManager_StateChanged;
 
-                        _sessionManager.ResetConnectionRetryTimers();
+	                    _sessionManager.ResetConnectionRetryTimers();
 
                         StateManager.ControlSession.HasControlStateChanged += OnSessionControlChanged;
                         StateManager.Intersection.ChangedState += OnIntersectionControlChanged;
@@ -293,7 +295,8 @@ namespace CodingConnected.TLCFI.NET.Client
                             "Session could not be started and configured correctly and will be closed. Exception: ");
                         await _sessionManager.EndActiveSessionAsync(false);
                     }
-                    await Task.Delay(-1, sessionToken);
+					// wait for the current session to end TODO: is this needed?
+                    //await Task.Delay(-1, sessionToken);
                     StateManager = null;
                 }
                 catch (TaskCanceledException)
@@ -450,7 +453,7 @@ namespace CodingConnected.TLCFI.NET.Client
             }
             await _sessionManager.EndActiveSessionAsync(true);
             _sessionCancellationTokenSource?.Cancel();
-            _sessionManager.DisposeActiveSession();
+	        _sessionManager.DisposeActiveSession();
         }
 
         /// <summary>
@@ -776,11 +779,21 @@ namespace CodingConnected.TLCFI.NET.Client
             }
         }
 
-        #endregion // Public Methods
+	    public void OverrideDefaultSessionManager(ITLCFIClientSessionManager manager)
+	    {
+		    _sessionManager = manager;
+	    }
 
-        #region Private Methods
+	    public void OverrideDefaultInitializer(ITLCFIClientInitializer initializer)
+	    {
+		    _clientInitializer = initializer;
+	    }
 
-        private async void OnSessionControlChanged(object sender, ControlStateChangedEventArgs state)
+		#endregion // Public Methods
+
+		#region Private Methods
+
+		private async void OnSessionControlChanged(object sender, ControlStateChangedEventArgs state)
         {
             switch (state.NewState)
             {
@@ -990,15 +1003,15 @@ namespace CodingConnected.TLCFI.NET.Client
             _config = config;
             _mainCancellationToken = token;
             token.Register(() => { _sessionCancellationTokenSource.Cancel(); });
-            var endPoint = new IPEndPoint(IPAddress.Parse(_config.RemoteAddress), config.RemotePort);
-            _sessionManager = new TLCFIClientSessionManager(endPoint);
-            _sessionManager.TLCSessionEnded += OnSessionEnded;
-            _sessionManager.TLCSessionStarted += OnSessionStarted;
-            _sessionManager.TLCSessionEventOccured += (o, e) =>
+            _endPoint = new IPEndPoint(IPAddress.Parse(_config.RemoteAddress), config.RemotePort);
+	        _sessionManager = new TLCFIClientSessionManager();
+	        _sessionManager.TLCSessionEnded += OnSessionEnded;
+	        _sessionManager.TLCSessionStarted += OnSessionStarted;
+	        _sessionManager.TLCSessionEventOccured += (o, e) =>
             {
                 EventOccured?.Invoke(this, e);
             };
-            _clientInitializer = new TLCFIClientInitializer(_config);
+            _clientInitializer = new TLCFIClientInitializer();
         }
 
         #endregion // Constructor

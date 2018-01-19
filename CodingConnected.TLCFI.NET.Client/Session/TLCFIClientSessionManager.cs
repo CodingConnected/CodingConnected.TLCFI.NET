@@ -10,8 +10,22 @@ using NLog;
 
 namespace CodingConnected.TLCFI.NET.Client.Session
 {
-    internal class TLCFIClientSessionManager
-    {
+	public interface ITLCFIClientSessionManager
+	{
+		Task<TLCFIClientSession> GetNewSession(IPEndPoint ipEndPoint, TLCFIClientStateManager stateManager, CancellationToken token);
+		void ResetConnectionRetryTimers();
+		Task EndActiveSessionAsync(bool expected);
+		void DisposeActiveSession();
+
+		event EventHandler<int> ConnectingStarted;
+		event EventHandler<int> ConnectingFailed;
+		event EventHandler<TLCFIClientSession> TLCSessionStarted;
+		event EventHandler<bool> TLCSessionEnded;
+		event EventHandler<ObjectEvent> TLCSessionEventOccured;
+	}
+
+	public class TLCFIClientSessionManager : ITLCFIClientSessionManager
+	{
         #region Fields
 
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -19,7 +33,6 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         private int _tries;
         private int _timeout = 1000;
         private DateTime _lastSuccesfulRegister;
-        private readonly IPEndPoint _endPoint;
         private static TLCFIClientSession _activeSession;
         private static readonly object _locker = new object();
         private CancellationTokenSource _tokenSource;
@@ -27,7 +40,8 @@ namespace CodingConnected.TLCFI.NET.Client.Session
         #endregion // Fields
 
         #region Properties
-        #endregion // Properties
+
+		#endregion // Properties
 
         #region Events
 
@@ -46,7 +60,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
 
         #region Public Methods
 
-        public async Task<TLCFIClientSession> GetNewSession(TLCFIClientStateManager stateManager, CancellationToken token)
+        public async Task<TLCFIClientSession> GetNewSession(IPEndPoint endPoint, TLCFIClientStateManager stateManager, CancellationToken token)
         {
             if (token.IsCancellationRequested)
                 return null;
@@ -90,7 +104,7 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             }
 
             _tokenSource = new CancellationTokenSource();
-            var session = new TLCFIClientSession(stateManager, _endPoint, _tokenSource.Token);
+            var session = new TLCFIClientSession(stateManager, endPoint, _tokenSource.Token);
             _activeSession = session;
             session.SessionEnded += OnSessionEnded;
             session.Disconnected += OnSessionDisconnected;
@@ -101,8 +115,8 @@ namespace CodingConnected.TLCFI.NET.Client.Session
             var watch = new Stopwatch();
             watch.Reset();
 
-            var sesIp = _endPoint.Address.ToString();
-            var sesPort = _endPoint.Port.ToString();
+            var sesIp = endPoint.Address.ToString();
+            var sesPort = endPoint.Port.ToString();
 
             while (!session.Connected)
             {
@@ -184,20 +198,19 @@ namespace CodingConnected.TLCFI.NET.Client.Session
                 _activeSession = null;
             }
         }
-
+		
         #endregion // Public Methods
 
         #region Private Methods
 
-        private void OnSessionDisconnected(object sender, EventArgs e)
-        {
-            _logger.Info("TCP connection with {0}:{1} was closed; session will end.", (object)_activeSession.RemoteEndPoint.Address,
-                (object)_activeSession.RemoteEndPoint.Port);
-
+		private void OnSessionDisconnected(object sender, EventArgs e)
+		{
+			_logger.Info("TCP connection with {0}:{1} was closed; session will end.", (object) _activeSession.RemoteEndPoint.Address,
+				(object) _activeSession.RemoteEndPoint.Port);
             // do nothing here; the session will trigger SessionEnded
-        }
+		}
 
-        private async void OnSessionReceiveAliveTimeout(object sender, EventArgs e)
+		private async void OnSessionReceiveAliveTimeout(object sender, EventArgs e)
         {
             _logger.Info("Receive alive timeout occured; closing session.");
 
@@ -250,11 +263,10 @@ namespace CodingConnected.TLCFI.NET.Client.Session
 
         #region Constructor
 
-        public TLCFIClientSessionManager(IPEndPoint endPoint)
+        public TLCFIClientSessionManager()
         {
-            _endPoint = endPoint;
         }
-
-        #endregion // Constructor
-    }
+        
+		#endregion // Constructor
+	}
 }
